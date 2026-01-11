@@ -15,7 +15,7 @@ export const TabBar = () => {
   ];
 
   return (
-    <nav className="bg-background border-t border-border/40 px-4 pb-safe z-50 transition-colors duration-300">
+    <nav className="bg-background border-t border-border/40 px-4 pb-4 z-50 transition-colors duration-300 ">
       <div className="flex justify-around items-center h-14 max-w-screen-sm mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
