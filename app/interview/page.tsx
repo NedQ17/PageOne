@@ -147,7 +147,7 @@ export default function InterviewPage() {
       </header>
 
       <div className="space-y-6">
-        {/* BASE BLOCK */}
+        {/* BASE BLOCK 
         {baseData.length > 0 ? (
           <div className="bg-muted/30 rounded-[2.5rem] p-8 animate-in fade-in zoom-in duration-300 border border-border/10">
             <div className="flex justify-between items-center mb-6">
@@ -169,7 +169,7 @@ export default function InterviewPage() {
             <h3 className="text-xl font-medium text-foreground">Base Reflection</h3>
             <p className="text-xs text-muted-foreground mt-1">Core daily questions</p>
           </button>
-        )}
+        )}*/}
 
         {/* AI BLOCK */}
         {aiData.length > 0 ? (

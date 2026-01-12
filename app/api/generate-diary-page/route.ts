@@ -28,19 +28,24 @@ export async function POST() {
       supabase.from('interview_responses').select('question, answer').eq('user_id', user.id).gte('created_at', today)
     ]);
 
+    // Проверка на наличие данных
+    if ((!entries || entries.length === 0) && (!interviews || interviews.length === 0)) {
+      return NextResponse.json({ error: 'No data found for today to generate a story.' }, { status: 400 });
+    }
+
     const context = `
       RAW NOTES: ${entries?.map(e => e.content).join('\n')}
       INTERVIEW ANSWERS: ${interviews?.map(i => `Q: ${i.question} A: ${i.answer}`).join('\n')}
     `;
 
-    // 2. AI склеивает данные, удаляя повторы
+    // 2. AI склеивает данные
     const completion = await openai.chat.completions.create({
       model: "openai/gpt-4o-mini",
       messages: [
         { 
           role: 'system', 
           content: `You are an expert biographer. Combine the user's raw notes and interview answers into a single, cohesive, poetic daily journal page. 
-          CRITICAL: Remove duplicate information. If a note and an answer say the same thing, merge them into one narrative sentence.
+          CRITICAL: Remove duplicate information. 
           Structure: Give it a creative title and a 3-4 paragraph story. 
           Return ONLY JSON: {"title": "...", "content": "..."}` 
         },
@@ -51,8 +56,8 @@ export async function POST() {
 
     const story = JSON.parse(completion.choices[0].message.content || '{}');
 
-    // 3. Сохраняем (используем upsert, чтобы обновить, если уже есть)
-    const { data: page, error } = await supabase
+    // 3. Сохраняем страницу дневника (upsert)
+    const { data: page, error: saveError } = await supabase
       .from('daily_pages')
       .upsert({
         user_id: user.id,
@@ -64,10 +69,27 @@ export async function POST() {
       .select()
       .single();
 
-    if (error) throw error;
+    if (saveError) throw saveError;
+
+    // 4. ОЧИСТКА: Удаляем вопросы, ответы и заметки
+    // Выполняется только если страница успешно сохранилась
+    await Promise.all([
+      supabase
+        .from('interview_responses')
+        .delete()
+        .eq('user_id', user.id)
+        .gte('created_at', today),
+      supabase
+        .from('entries')
+        .delete()
+        .eq('user_id', user.id)
+        .gte('created_at', today)
+    ]);
+
     return NextResponse.json(page);
 
   } catch (e: any) {
+    console.error("Error in generation flow:", e.message);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }

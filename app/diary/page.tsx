@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
-import { Calendar, Filter, Loader2, Sparkles, X, BookOpen } from "lucide-react";
+import { Calendar, Filter, Loader2, Sparkles, X, BookOpen, Search } from "lucide-react";
 
 export default function DiaryPage() {
   const [pages, setPages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   
-  // Состояние для модального окна
+  // Состояния фильтрации
+  const [searchQuery, setSearchQuery] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  
   const [selectedPage, setSelectedPage] = useState<any>(null);
 
   useEffect(() => {
@@ -17,6 +22,7 @@ export default function DiaryPage() {
   }, []);
 
   const fetchPages = async () => {
+    setLoading(true);
     const { data } = await supabase
       .from('daily_pages')
       .select('*')
@@ -25,15 +31,27 @@ export default function DiaryPage() {
     setLoading(false);
   };
 
+  // Логика фильтрации (выполняется на клиенте для мгновенного отклика)
+  const filteredPages = useMemo(() => {
+    return pages.filter((page) => {
+      const matchesSearch = 
+        page.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        page.content.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const pageDate = page.date; // Формат YYYY-MM-DD
+      const matchesStart = !startDate || pageDate >= startDate;
+      const matchesEnd = !endDate || pageDate <= endDate;
+
+      return matchesSearch && matchesStart && matchesEnd;
+    });
+  }, [pages, searchQuery, startDate, endDate]);
+
   const handleSyncDay = async () => {
     const today = new Date().toISOString().split('T')[0];
     const existingPage = pages.find(p => p.date === today);
 
     if (existingPage) {
-      const confirmOverwrite = confirm(
-        "A story for today already exists. Do you want to re-generate it? This will overwrite the current version."
-      );
-      if (!confirmOverwrite) return;
+      if (!confirm("A story for today already exists. Re-generate and overwrite?")) return;
     }
 
     setIsGenerating(true);
@@ -47,10 +65,16 @@ export default function DiaryPage() {
     }
   };
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStartDate("");
+    setEndDate("");
+  };
+
   return (
     <div className="flex flex-col h-full bg-background px-6 relative">
       {/* Header */}
-      <header className="pt-12 pb-8 flex justify-between items-end">
+      <header className="pt-12 pb-6 flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground">Diary</h1>
           <p className="text-muted-foreground font-sans text-[10px] uppercase tracking-widest mt-1">
@@ -65,23 +89,70 @@ export default function DiaryPage() {
           >
             {isGenerating ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
           </button>
-          <button className="p-2 text-muted-foreground/50 hover:text-foreground">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={`p-2 rounded-full transition-colors ${showFilters ? 'bg-muted text-foreground' : 'text-muted-foreground/50 hover:text-foreground'}`}
+          >
             <Filter size={20} />
           </button>
         </div>
       </header>
 
+      {/* Панель фильтров */}
+      {showFilters && (
+        <div className="mb-8 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+            <input 
+              type="text"
+              placeholder="Search thoughts, places, people..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-muted/30 border border-border/40 rounded-2xl py-2.5 pl-10 pr-4 text-sm outline-none focus:border-foreground/20 transition-colors"
+            />
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex-1 flex items-center bg-muted/30 border border-border/40 rounded-2xl px-3 py-1">
+              <span className="text-[10px] uppercase text-muted-foreground mr-2">From</span>
+              <input 
+                type="date" 
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="bg-transparent text-xs outline-none w-full" 
+              />
+            </div>
+            <div className="flex-1 flex items-center bg-muted/30 border border-border/40 rounded-2xl px-3 py-1">
+              <span className="text-[10px] uppercase text-muted-foreground mr-2">To</span>
+              <input 
+                type="date" 
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="bg-transparent text-xs outline-none w-full" 
+              />
+            </div>
+            {(startDate || endDate || searchQuery) && (
+              <button onClick={clearFilters} className="p-2 text-muted-foreground hover:text-foreground">
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Список страниц */}
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 pb-20">
         {loading ? (
           <div className="flex justify-center pt-20"><Loader2 className="animate-spin opacity-20" /></div>
-        ) : pages.length === 0 ? (
+        ) : filteredPages.length === 0 ? (
           <div className="text-center pt-20 opacity-40">
             <Calendar size={40} className="mx-auto mb-4" />
-            <p className="text-sm font-serif italic">Your story begins today...</p>
+            <p className="text-sm font-serif italic">
+              {searchQuery || startDate || endDate ? "Nothing matches your filters" : "Your story begins today..."}
+            </p>
           </div>
         ) : (
-          pages.map((page, i) => (
+          filteredPages.map((page, i) => (
             <div 
               key={page.id} 
               onClick={() => setSelectedPage(page)}
@@ -115,63 +186,26 @@ export default function DiaryPage() {
         )}
       </div>
 
-      {/* MODAL OVERLAY */}
+      {/* MODAL OVERLAY (без изменений) */}
       {selectedPage && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-background/80 backdrop-blur-md"
-            onClick={() => setSelectedPage(null)}
-          />
-          
-          {/* Modal Content */}
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setSelectedPage(null)} />
           <div className="relative w-full max-w-2xl bg-background border-t sm:border border-border/50 rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-300 max-h-[90vh] flex flex-col">
-            
-            {/* Modal Header */}
             <div className="flex justify-between items-center px-8 pt-8 pb-4">
               <div className="flex items-center gap-3">
-                <div className="bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">
-                  Archive
-                </div>
-                <span className="text-xs font-mono text-muted-foreground">
-                  {new Date(selectedPage.date).toLocaleDateString('en-US', { dateStyle: 'long' })}
-                </span>
+                <div className="bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Archive</div>
+                <span className="text-xs font-mono text-muted-foreground">{new Date(selectedPage.date).toLocaleDateString('en-US', { dateStyle: 'long' })}</span>
               </div>
-              <button 
-                onClick={() => setSelectedPage(null)}
-                className="p-2 hover:bg-muted rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <button onClick={() => setSelectedPage(null)} className="p-2 hover:bg-muted rounded-full transition-colors"><X size={20} /></button>
             </div>
-
-            {/* Modal Body */}
             <div className="flex-1 overflow-y-auto px-8 pb-12 pt-4 no-scrollbar">
-              <h2 className="text-3xl font-serif font-bold text-foreground mb-8 leading-tight">
-                {selectedPage.title}
-              </h2>
-              
+              <h2 className="text-3xl font-serif font-bold text-foreground mb-8 leading-tight">{selectedPage.title}</h2>
               <div className="prose prose-stone">
-                {selectedPage.content.split('\n').map((paragraph: string, idx: number) => {
-                  // Базовые стили для всех параграфов
-                  const baseStyles = "text-lg font-serif text-foreground/90 leading-relaxed mb-6";
-                  // Стили буквицы только для первого параграфа (idx === 0)
-                  const dropCapStyles = idx === 0 ? "first-letter:text-3xl first-letter:font-bold first-letter:mr-1" : "";
-                  
-                  return (
-                    <p 
-                      key={idx} 
-                      className={`${baseStyles} ${dropCapStyles}`}
-                    >
-                      {paragraph}
-                    </p>
-                  );
-                })}
-              </div>
-
-              <div className="mt-12 pt-8 border-t border-border/20 flex justify-between items-center text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40">
-                <span>End of Chapter</span>
-                <span>{selectedPage.word_count} Words Total</span>
+                {selectedPage.content.split('\n').map((paragraph: string, idx: number) => (
+                  <p key={idx} className={`text-lg font-serif text-foreground/90 leading-relaxed mb-6 ${idx === 0 ? "first-letter:text-3xl first-letter:font-bold first-letter:mr-1" : ""}`}>
+                    {paragraph}
+                  </p>
+                ))}
               </div>
             </div>
           </div>
