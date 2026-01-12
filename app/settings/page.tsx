@@ -132,7 +132,7 @@ export default function SettingsPage() {
             />
           </div>
 
-          {/* AI TOGGLE */}
+          {/* AI TOGGLE 
           <div className="flex items-center justify-between p-6 bg-muted/50 rounded-3xl border border-border/5">
             <div className="flex gap-4 items-center">
               <BrainCircuit
@@ -159,7 +159,7 @@ export default function SettingsPage() {
                 }`}
               />
             </button>
-          </div>
+          </div> */}
 
           {/* SAVE */}
           <button

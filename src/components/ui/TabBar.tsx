@@ -10,7 +10,7 @@ export const TabBar = () => {
   const navItems = [
     { name: 'Today', href: '/', icon: MessageSquare },
     { name: 'Interview', href: '/interview', icon: Sparkles }, // Новый раздел
-    { name: 'Shell', href: '/shell', icon: Library },
+   // { name: 'Shell', href: '/shell', icon: Library },
     { name: 'Diary', href: '/diary', icon: BookOpen },
   ];
 
