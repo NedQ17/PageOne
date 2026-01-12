@@ -71,7 +71,7 @@ export async function GET() {
 
             STRICT RULES:
             1. If CURRENT_CONTEXT is "EMPTY_NO_NOTES_FOR_TODAY":
-              - Ask 5 questions specifically about the PRESENT day (e.g., morning mood, current energy, expectations for tonight, something seen today).
+              - Ask 5 questions specifically about the PRESENT day.
               - DO NOT ask abstract questions like "What is success".
               - DO NOT assume any activities (no gym, no work, no travel) unless they are in the context.
             

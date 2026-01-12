@@ -4,10 +4,9 @@ import {
   Send,
   CheckCircle2,
   User,
-  Loader2,
   ChevronLeft,
   ChevronRight,
-  Trash2, // Импортируем иконку корзины
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -22,7 +21,6 @@ export default function ThisDay() {
   const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [isSyncing, setIsSyncing] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -153,7 +151,6 @@ export default function ThisDay() {
     setEditValue("");
   };
 
-  // ФУНКЦИЯ УДАЛЕНИЯ
   const deleteNote = async (noteId: string) => {
     if (!confirm("Delete this entry?")) return;
 
@@ -231,12 +228,12 @@ export default function ThisDay() {
         </div>
       </header>
 
-      {/* SCROLLABLE CONTENT */}
-        <div
-          ref={scrollContainerRef}
-          className="overflow-y-auto px-6 py-4"
-          style={{ height: "calc(100dvh - 220px)" }}
-        >
+{/* SCROLLABLE CONTENT */}
+      <div
+        ref={scrollContainerRef}
+        className="overflow-y-auto px-6 py-4 space-y-2 no-scrollbar"
+        style={{ height: "calc(100dvh - 180)" }}
+      >
         {notes.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <p className="text-muted-foreground/30 text-[10px] uppercase tracking-widest text-center">
@@ -246,18 +243,24 @@ export default function ThisDay() {
           </div>
         ) : (
           notes.map((note, index) => (
-            <div key={note.id} className="group transition-all relative">
+            <div 
+              key={note.id} 
+              className={`group transition-all relative ${
+                index !== 0 ? "border-t border-border/60 pt-8" : ""
+              }`}
+            >
+              {/* INFO LINE - сокращен отступ снизу до mb-1 */}
               <div className="flex justify-between items-center mb-1">
-                <span className="text-[9px] font-mono text-muted-foreground/40 uppercase tracking-widest">
+                <span className="text-[10px] font-mono text-muted-foreground/40 uppercase tracking-[0.15em]">
                   Entry {String(index + 1).padStart(2, "0")}
                 </span>
-                <span className="text-[9px] font-mono text-muted-foreground/40">
+                <span className="text-[10px] font-mono text-muted-foreground/40">
                   {note.time}
                 </span>
               </div>
 
               {editingId === note.id ? (
-                <div className="relative group/edit">
+                <div className="relative group/edit mt-2">
                   <textarea
                     autoFocus
                     value={editValue}
@@ -271,14 +274,13 @@ export default function ThisDay() {
                         cancelEdit();
                       }
                     }}
-                    className="w-full p-4 pb-14 bg-muted/40 dark:bg-zinc-800/40 rounded-2xl border border-border/50 text-lg leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-foreground/10 transition-all font-serif"
+                    className="w-full p-4 pb-14 bg-muted/30 rounded-2xl border border-border/50 text-lg leading-relaxed resize-none focus:outline-none focus:ring-1 focus:ring-foreground/10 transition-all font-serif"
                     rows={Math.max(3, editValue.split("\n").length)}
                   />
                   <div className="absolute bottom-3 left-3">
                     <button
                       onClick={() => deleteNote(note.id)}
-                      className="p-2 text-red-500/50 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-full transition-all"
-                      title="Delete note"
+                      className="p-2 text-red-500/40 hover:text-red-600 transition-all"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -286,13 +288,13 @@ export default function ThisDay() {
                   <div className="absolute bottom-3 right-3 flex gap-2">
                     <button
                       onClick={cancelEdit}
-                      className="text-[10px] uppercase tracking-widest px-3 py-1.5 hover:bg-foreground/5 text-muted-foreground rounded-full transition-colors font-sans"
+                      className="text-[10px] uppercase tracking-widest px-3 py-1.5 text-muted-foreground font-sans"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={() => saveEdit(note.id)}
-                      className="text-[10px] uppercase tracking-widest font-bold px-4 py-1.5 bg-foreground text-background rounded-full hover:opacity-90 transition-all shadow-sm font-sans"
+                      className="text-[10px] uppercase tracking-widest font-bold px-4 py-1.5 bg-foreground text-background rounded-full font-sans"
                     >
                       Save
                     </button>
@@ -300,7 +302,7 @@ export default function ThisDay() {
                 </div>
               ) : (
                 <p
-                  className="text-lg leading-relaxed text-foreground/90 font-serif whitespace-pre-wrap cursor-pointer group-hover:text-foreground/100 transition-colors py-1"
+                  className="text-lg leading-relaxed text-foreground/90 font-serif whitespace-pre-wrap cursor-pointer py-1"
                   onDoubleClick={() => {
                     setEditingId(note.id);
                     setEditValue(note.text);
@@ -312,7 +314,7 @@ export default function ThisDay() {
             </div>
           ))
         )}
-        
+        <div className="h-32" />
       </div>
 
       {/* INPUT AREA */}
