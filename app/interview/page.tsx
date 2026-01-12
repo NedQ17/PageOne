@@ -179,7 +179,7 @@ export default function InterviewPage() {
       </header>
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-8 pb-48 space-y-6 touch-pan-y">
-        {/* Блок базовых вопросов */}
+        {/* Блок базовых вопросов 
         {baseData.length > 0 ? (
           <div className="bg-muted/20 rounded-[2.5rem] p-8 border border-border/5 animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="flex justify-between items-center mb-6">
@@ -208,7 +208,7 @@ export default function InterviewPage() {
               <p className="text-[11px] text-muted-foreground/40 uppercase tracking-wide mt-1">Core daily questions</p>
             </div>
           </button>
-        )}
+        )}*/}
 
         {/* Блок ИИ вопросов */}
         {aiData.length > 0 ? (
