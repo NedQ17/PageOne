@@ -161,10 +161,13 @@ export default function InterviewPage() {
     </div>
   );
 
-  // 3. Главное меню интервью (Плавное появление благодаря animate-question)
+// 3. Главное меню интервью
   return (
-    <div className="flex flex-col h-full bg-background font-sans animate-question">
-      <header className="px-8 pt-12 pb-6 flex flex-col gap-6 bg-background z-10">
+    /* h-[100dvh] гарантирует, что на мобилках высота будет ровно по экрану */
+    <div className="flex flex-col h-[100dvh] bg-background font-sans animate-question overflow-hidden">
+      
+      {/* HEADER: Добавлен flex-shrink-0, чтобы заголовок не уползал */}
+      <header className="px-8 pt-12 pb-6 flex flex-col gap-6 bg-background z-20 flex-shrink-0">
         <button 
           onClick={() => router.push('/')} 
           className="flex items-center gap-2 text-muted-foreground/40 hover:text-foreground transition-colors w-fit"
@@ -178,8 +181,10 @@ export default function InterviewPage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-8 pb-48 space-y-6 touch-pan-y">
-        {/* Блок базовых вопросов 
+      {/* КОНТЕНТ: Скролл теперь будет работать четко внутри этой области */}
+      <div className="flex-1 overflow-y-auto px-8 pb-48 space-y-6 touch-pan-y custom-scrollbar">
+        
+        {/* Блок базовых вопросов (раскомментирован и поправлен) 
         {baseData.length > 0 ? (
           <div className="bg-muted/20 rounded-[2.5rem] p-8 border border-border/5 animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="flex justify-between items-center mb-6">
@@ -191,8 +196,8 @@ export default function InterviewPage() {
             <div className="space-y-6">
               {baseData.map((item, i) => (
                 <div key={i} className="space-y-2">
-                  <p className="text-[10px] text-muted-foreground/40 uppercase font-mono tracking-tight">{item.q}</p>
-                  <p className="text-[15px] text-foreground/90 leading-relaxed font-serif">{item.a}</p>
+                  <p className="text-[10px] text-muted-foreground/40 uppercase font-mono tracking-tight leading-tight">{item.q}</p>
+                  <p className="text-[16px] text-foreground/90 leading-relaxed font-serif">{item.a}</p>
                 </div>
               ))}
             </div>
@@ -200,10 +205,10 @@ export default function InterviewPage() {
         ) : (
           <button 
             onClick={() => startBlock('base')} 
-            className="w-full p-8 bg-muted/30 rounded-[2.5rem] text-left border border-border/5 hover:bg-muted/50 transition-all flex flex-col justify-between min-h-[160px] active:scale-[0.98]"
+            className="w-full p-8 bg-muted/30 rounded-[2.5rem] text-left border border-border/5 hover:bg-muted/50 transition-all flex flex-col justify-between min-h-[160px] active:scale-[0.98] flex-shrink-0"
           >
             <Coffee size={24} className="text-muted-foreground/30" />
-            <div>
+            <div className="mt-8">
               <h3 className="text-xl font-medium text-foreground font-serif">Base Reflection</h3>
               <p className="text-[11px] text-muted-foreground/40 uppercase tracking-wide mt-1">Core daily questions</p>
             </div>
@@ -222,8 +227,8 @@ export default function InterviewPage() {
             <div className="space-y-6">
               {aiData.map((item, i) => (
                 <div key={i} className="space-y-2">
-                  <p className="text-[10px] text-muted-foreground/40 uppercase font-mono tracking-tight">{item.q}</p>
-                  <p className="text-[15px] text-foreground/90 leading-relaxed font-serif">{item.a}</p>
+                  <p className="text-[10px] text-muted-foreground/40 uppercase font-mono tracking-tight leading-tight">{item.q}</p>
+                  <p className="text-[16px] text-foreground/90 leading-relaxed font-serif">{item.a}</p>
                 </div>
               ))}
             </div>
@@ -232,7 +237,7 @@ export default function InterviewPage() {
           <button 
             onClick={() => startBlock('ai')} 
             disabled={loadingAi}
-            className="w-full p-8 bg-foreground text-background rounded-[2.5rem] text-left hover:opacity-90 transition-all flex flex-col justify-between min-h-[160px] relative overflow-hidden active:scale-[0.98] disabled:opacity-80"
+            className="w-full p-8 bg-foreground text-background rounded-[2.5rem] text-left hover:opacity-90 transition-all flex flex-col justify-between min-h-[160px] relative overflow-hidden active:scale-[0.98] disabled:opacity-80 flex-shrink-0"
           >
             {loadingAi ? (
               <div className="flex items-center gap-3">
@@ -242,7 +247,7 @@ export default function InterviewPage() {
             ) : (
               <>
                 <Sparkles size={24} className="opacity-30" />
-                <div>
+                <div className="mt-8">
                   <h3 className="text-xl font-medium font-serif">AI Insights</h3>
                   <p className="text-[11px] opacity-40 uppercase tracking-wide mt-1">Deep dive into your day</p>
                 </div>
@@ -252,16 +257,26 @@ export default function InterviewPage() {
         )}
       </div>
 
-      {/* Кнопка завершения дня */}
+{/* КНОПКА ЗАВЕРШЕНИЯ: Теперь с безопасным отступом снизу */}
       {(baseData.length > 0 || aiData.length > 0) && (
-        <div className="fixed bottom-10 left-8 right-8 z-30 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="shrink-0 px-8 pb-10 pt-4 bg-gradient-to-t from-background via-background to-transparent sticky bottom-0 z-30">
           <button 
             onClick={finalize}
             disabled={isSyncing}
-            className="w-full bg-foreground text-background py-6 rounded-full font-bold flex items-center justify-center gap-3 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] active:scale-95 transition-all"
+            className="w-full bg-foreground text-background py-6 rounded-full font-bold flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(0,0,0,0.3)] active:scale-95 transition-all"
           >
-            {isSyncing ? <Loader2 className="animate-spin" size={20} /> : <><RefreshCw size={20} /> Complete Reflection</>}
+            {isSyncing ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              <>
+                <RefreshCw size={20} />
+                <span>Complete Reflection</span>
+              </>
+            )}
           </button>
+          
+          {/* Динамический отступ для Safe Area на iPhone (челка снизу) */}
+          <div className="h-[env(safe-area-inset-bottom)]" />
         </div>
       )}
     </div>
