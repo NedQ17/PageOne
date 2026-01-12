@@ -1,24 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  /* Основная палитра для чистого дизайна */
   --background: #ffffff;
-  --foreground: #111827; /* Почти черный (Slate-900) для лучшей читаемости */
-  --accent: #3b82f6;     /* Твой голубой из наброска (Blue-500) */
-  --muted: #f3f4f6;      /* Светло-серый для карточек и инпутов (Gray-100) */
-  --border: #e5e7eb;     /* Цвет границ (Gray-200) */
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-accent: var(--accent);
-  --color-muted: var(--muted);
-  --color-border: var(--border);
-  
-  /* Используем переменные шрифтов, которые мы настроили в layout.tsx */
-  --font-sans: var(--font-sans);
-  --font-serif: var(--font-serif);
+  --foreground: #111827;
+  --accent: #3b82f6;
+  --muted: #f3f4f6;
+  --border: #e5e7eb;
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,58 +18,58 @@
   }
 }
 
-/* Базовые сбросы и настройки для Mobile-First */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --font-serif: var(--font-serif), Georgia, serif;
+}
+
 @layer base {
-  * {
-    @apply border-border;
-    /* Отключаем синюю подсветку при клике на ссылки/кнопки в мобильном Safari */
-    -webkit-tap-highlight-color: transparent;
+  /* Ключ к "бесшовному" фону: задаем его на самом верхнем уровне */
+  html {
+    background-color: var(--background);
+    height: 100%;
+    /* Позволяет фону заполнять зону за челкой */
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
-    background: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-sans), system-ui, sans-serif;
-    /* Запрещаем системный скролл-эффект (резиновый отскок) на всем теле, 
-       чтобы приложение ощущалось как нативное */
-    overscroll-behavior-y: none;
-    font-feature-settings: "cv11", "ss01"; /* Улучшенная читаемость шрифта Inter */
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    letter-spacing: -0.015em;
+    /* Убираем лишние ограничения, даем dvh */
+    min-height: 100dvh;
+    width: 100%;
+    position: fixed;
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 
-  /* Настройки для заголовков в стиле "Книги" */
-  h1, h2, .font-biography {
-    font-family: var(--font-serif), serif;
+  h1, h2, h3, .serif-text {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+
+  /* Правильный расчет хедера для iOS */
+  header {
+    /* Фон убираем или делаем прозрачным, чтобы видеть фон body/main */
+    background-color: transparent;
+    /* Внутренний отступ учитывает челку + ваш дизайн */
+    padding-top: calc(0.5rem + var(--safe-top)) !important;
   }
 }
 
 @layer utilities {
-  /* Плавный скролл только там, где нужно */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
-  }
-
-  /* Класс для учета "челок" и нижних полосок на iPhone */
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .pt-safe {
-    padding-top: env(safe-area-inset-top);
-  }
-
-  /* Скрытие скроллбара, если нужно */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 }
 
-/* Анимации для экрана вопросов */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -89,9 +77,4 @@
 
 .animate-question {
   animation: fadeIn 0.5s ease-out forwards;
-}
-
-/* Стили для текстового курсора в стиле "пишущей машинки" или фокуса */
-.input-focus-ring {
-  @apply focus:ring-2 focus:ring-accent focus:ring-offset-2 outline-none transition-all;
 }

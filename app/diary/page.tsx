@@ -10,11 +10,9 @@ export default function DiaryPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   
-  // Состояния фильтрации
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  
   const [selectedPage, setSelectedPage] = useState<any>(null);
 
   useEffect(() => {
@@ -31,14 +29,13 @@ export default function DiaryPage() {
     setLoading(false);
   };
 
-  // Логика фильтрации (выполняется на клиенте для мгновенного отклика)
   const filteredPages = useMemo(() => {
     return pages.filter((page) => {
       const matchesSearch = 
         page.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         page.content.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const pageDate = page.date; // Формат YYYY-MM-DD
+      const pageDate = page.date;
       const matchesStart = !startDate || pageDate >= startDate;
       const matchesEnd = !endDate || pageDate <= endDate;
 
@@ -47,7 +44,8 @@ export default function DiaryPage() {
   }, [pages, searchQuery, startDate, endDate]);
 
   const handleSyncDay = async () => {
-    const today = new Date().toISOString().split('T')[0];
+    // Получаем текущую дату в формате YYYY-MM-DD по местному времени
+    const today = new Date().toLocaleDateString('en-CA'); 
     const existingPage = pages.find(p => p.date === today);
 
     if (existingPage) {
@@ -56,10 +54,21 @@ export default function DiaryPage() {
 
     setIsGenerating(true);
     try {
-      const res = await fetch('/api/generate-diary-page', { method: 'POST' });
-      if (res.ok) await fetchPages();
-    } catch (e) {
-      alert("Error generating page");
+      // ПЕРЕДАЕМ ДАТУ в API, чтобы он знал, какие записи и интервью чистить
+      const res = await fetch('/api/generate-diary-page', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: today }) 
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to generate");
+      }
+
+      await fetchPages();
+    } catch (e: any) {
+      alert(e.message);
     } finally {
       setIsGenerating(false);
     }
@@ -73,7 +82,6 @@ export default function DiaryPage() {
 
   return (
     <div className="flex flex-col h-full bg-background px-6 relative">
-      {/* Header */}
       <header className="pt-12 pb-6 flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground">Diary</h1>
@@ -98,7 +106,6 @@ export default function DiaryPage() {
         </div>
       </header>
 
-      {/* Панель фильтров */}
       {showFilters && (
         <div className="mb-8 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="relative">
@@ -115,41 +122,26 @@ export default function DiaryPage() {
           <div className="flex items-center gap-3">
             <div className="flex-1 flex items-center bg-muted/30 border border-border/40 rounded-2xl px-3 py-1">
               <span className="text-[10px] uppercase text-muted-foreground mr-2">From</span>
-              <input 
-                type="date" 
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent text-xs outline-none w-full" 
-              />
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-xs outline-none w-full" />
             </div>
             <div className="flex-1 flex items-center bg-muted/30 border border-border/40 rounded-2xl px-3 py-1">
               <span className="text-[10px] uppercase text-muted-foreground mr-2">To</span>
-              <input 
-                type="date" 
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent text-xs outline-none w-full" 
-              />
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs outline-none w-full" />
             </div>
             {(startDate || endDate || searchQuery) && (
-              <button onClick={clearFilters} className="p-2 text-muted-foreground hover:text-foreground">
-                <X size={18} />
-              </button>
+              <button onClick={clearFilters} className="p-2 text-muted-foreground hover:text-foreground"><X size={18} /></button>
             )}
           </div>
         </div>
       )}
 
-      {/* Список страниц */}
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 pb-20">
         {loading ? (
           <div className="flex justify-center pt-20"><Loader2 className="animate-spin opacity-20" /></div>
         ) : filteredPages.length === 0 ? (
           <div className="text-center pt-20 opacity-40">
             <Calendar size={40} className="mx-auto mb-4" />
-            <p className="text-sm font-serif italic">
-              {searchQuery || startDate || endDate ? "Nothing matches your filters" : "Your story begins today..."}
-            </p>
+            <p className="text-sm font-serif italic">No stories found</p>
           </div>
         ) : (
           filteredPages.map((page, i) => (
@@ -166,19 +158,10 @@ export default function DiaryPage() {
                   {new Date(page.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
-              
-              <h3 className="text-xl font-serif font-medium text-foreground mb-1 group-hover:translate-x-1 transition-transform">
-                {page.title}
-              </h3>
-              
-              <p className="text-sm text-muted-foreground line-clamp-2 font-serif italic opacity-80 mb-4">
-                {page.content}
-              </p>
-              
+              <h3 className="text-xl font-serif font-medium text-foreground mb-1 group-hover:translate-x-1 transition-transform">{page.title}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-2 font-serif italic opacity-80 mb-4">{page.content}</p>
               <div className="flex items-center gap-4">
-                <span className="text-[10px] text-muted-foreground/60 uppercase tracking-tighter">
-                  {page.word_count} words
-                </span>
+                <span className="text-[10px] text-muted-foreground/60 uppercase tracking-tighter">{page.word_count} words</span>
                 <BookOpen size={12} className="text-muted-foreground/30 group-hover:text-foreground transition-colors" />
               </div>
             </div>
@@ -186,31 +169,42 @@ export default function DiaryPage() {
         )}
       </div>
 
-      {/* MODAL OVERLAY (без изменений) */}
-      {selectedPage && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setSelectedPage(null)} />
-          <div className="relative w-full max-w-2xl bg-background border-t sm:border border-border/50 rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-300 max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center px-8 pt-8 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Archive</div>
-                <span className="text-xs font-mono text-muted-foreground">{new Date(selectedPage.date).toLocaleDateString('en-US', { dateStyle: 'long' })}</span>
-              </div>
-              <button onClick={() => setSelectedPage(null)} className="p-2 hover:bg-muted rounded-full transition-colors"><X size={20} /></button>
+          {selectedPage && (
+      /* z-index изменен на 100, чтобы быть выше навигации */
+      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+        {/* Фон с размытием */}
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setSelectedPage(null)} />
+        
+        <div className="relative w-full max-w-2xl bg-background border-t sm:border border-border/50 rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-300 max-h-[92vh] flex flex-col">
+          {/* Шапка модалки */}
+          <div className="flex justify-between items-center px-8 pt-8 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Archive</div>
+              <span className="text-xs font-mono text-muted-foreground">
+                {new Date(selectedPage.date).toLocaleDateString('en-US', { dateStyle: 'long' })}
+              </span>
             </div>
-            <div className="flex-1 overflow-y-auto px-8 pb-12 pt-4 no-scrollbar">
-              <h2 className="text-3xl font-serif font-bold text-foreground mb-8 leading-tight">{selectedPage.title}</h2>
-              <div className="prose prose-stone">
-                {selectedPage.content.split('\n').map((paragraph: string, idx: number) => (
-                  <p key={idx} className={`text-lg font-serif text-foreground/90 leading-relaxed mb-6 ${idx === 0 ? "first-letter:text-3xl first-letter:font-bold first-letter:mr-1" : ""}`}>
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
+            <button onClick={() => setSelectedPage(null)} className="p-2 hover:bg-muted rounded-full transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Контент модалки с увеличенным нижним отступом pb-32 */}
+          <div className="flex-1 overflow-y-auto px-8 pb-32 pt-4 no-scrollbar">
+            <h2 className="text-3xl font-serif font-bold text-foreground mb-8 leading-tight">
+              {selectedPage.title}
+            </h2>
+            <div className="prose prose-stone">
+              {selectedPage.content.split('\n').map((paragraph: string, idx: number) => (
+                <p key={idx} className={`text-lg font-serif text-foreground/90 leading-relaxed mb-6 ${idx === 0 ? "first-letter:text-3xl first-letter:font-bold first-letter:mr-1" : ""}`}>
+                  {paragraph}
+                </p>
+              ))}
             </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 }

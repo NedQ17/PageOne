@@ -140,7 +140,7 @@ export default function InterviewPage() {
   );
 
   return (
-    <div className="flex flex-col h-full bg-background px-8 pt-20 pb-32 overflow-y-auto no-scrollbar">
+    <div className="flex flex-col h-full bg-background px-8 pb-32 overflow-y-auto no-scrollbar">
       <header className="mb-12">
         <h1 className="text-4xl font-serif font-bold tracking-tight text-foreground">Interview</h1>
         <p className="text-muted-foreground text-[10px] uppercase tracking-widest mt-2">Finalize your day</p>
@@ -208,7 +208,7 @@ export default function InterviewPage() {
 
       {/* FOOTER SYNC BUTTON */}
       {(baseData.length > 0 || aiData.length > 0) && (
-        <div className="fixed bottom-10 left-8 right-8 animate-in slide-in-from-bottom duration-500">
+        <div className="fixed bottom-32 left-8 right-8 animate-in slide-in-from-bottom duration-500">
           <button 
             onClick={finalize}
             disabled={isSyncing}
