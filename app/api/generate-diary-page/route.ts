@@ -59,7 +59,7 @@ export async function POST(req: Request) {
           
           STRICT RULES:
           1. LANGUAGE: Match the user's language (Russian if they write in Russian, English if in English).
-          2. STYLE: Write in deep, atmospheric PROSE. 
+          2. STYLE: Use prose. Avoid complex metaphors, flowery adjectives, or "biographical" clichés 
           3. NO VERSE: Absolutely forbidden to write in poems, rhymes, or verse. Use standard paragraphs.
           4. CONTENT: Use USER_NOTES as the foundation and INTERVIEW_RESPONSES for emotional depth.
           
