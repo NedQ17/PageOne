@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   Calendar,
@@ -12,20 +11,17 @@ import {
   X,
   BookOpen,
   Search,
-  Trash2,
 } from "lucide-react";
 
-// Динамический импорт модалки
+// Динамический импорт модалки для оптимизации веса страницы
 const FullStoryModal = dynamic(() => import("@/components/StoryModal"), {
   ssr: false,
+  loading: () => <div className="fixed inset-0 bg-background/20 backdrop-blur-sm z-[100]" />
 });
 
 export default function DiaryPage() {
-  const router = useRouter();
-
   const [pages, setPages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -41,21 +37,16 @@ export default function DiaryPage() {
     fetchPages();
   }, []);
 
-  // lock body scroll when modal is open
+  // Блокировка скролла при открытой модалке
   useEffect(() => {
-    if (selectedPage) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    document.body.style.overflow = selectedPage ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [selectedPage]);
 
   /* ---------------- data ---------------- */
 
   const fetchPages = async () => {
+    setLoading(true);
     const { data } = await supabase
       .from("daily_pages")
       .select("*")
@@ -63,7 +54,6 @@ export default function DiaryPage() {
 
     setPages(data || []);
     setLoading(false);
-    setIsInitialLoading(false);
   };
 
   const filteredPages = useMemo(() => {
@@ -139,82 +129,92 @@ export default function DiaryPage() {
     setEndDate("");
   };
 
-
-
   return (
     <div className="flex flex-col h-[100dvh] bg-background font-sans animate-question">
-      {/* HEADER */}
-      <header className="px-6 pt-12 pb-6 flex justify-between items-end bg-background sticky top-0 z-20">
-        <div>
-          <h1 className="text-3xl font-serif font-bold tracking-tight">Diary</h1>
-          <p className="text-muted-foreground/40 text-[10px] uppercase tracking-[0.2em] mt-1">
-            Life Archive
-          </p>
-        </div>
-        <div className="flex gap-5">
-          <button
-            onClick={() => setShowFilters((v) => !v)}
-            className={`p-2.5 rounded-full transition-all ${
-              showFilters
-                ? "bg-muted text-foreground"
-                : "text-muted-foreground/30 hover:text-foreground"
-            }`}
-          >
-            <Filter size={20} />
-          </button>
-          <button
-            onClick={handleSyncDay}
-            disabled={isGenerating}
-            className="p-2.5 bg-foreground text-background rounded-full disabled:opacity-30"
-          >
-            {isGenerating ? (
-              <Loader2 size={20} className="animate-spin" />
-            ) : (
-              <Sparkles size={20} />
-            )}
-          </button>
-        </div>
-      </header>
-
-      {/* FILTERS */}
-      {showFilters && (
-        <div className="px-6 mb-6 space-y-4">
-          <div className="relative">
-            <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/30"
-              size={16}
-            />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search memories..."
-              className="w-full bg-muted/30 rounded-2xl py-3 pl-11 pr-4 text-sm outline-none"
-            />
+      
+      {/* STICKY HEADER & FILTERS */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border/10">
+        <header className="px-6 pt-12 pb-6 flex justify-between items-end">
+          <div>
+            <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground">Diary</h1>
+            <p className="text-muted-foreground/40 text-[10px] uppercase tracking-[0.2em] mt-1">
+              Life Archive
+            </p>
           </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="flex-1 bg-muted/30 rounded-xl px-3 py-2 text-[11px]"
-            />
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="flex-1 bg-muted/30 rounded-xl px-3 py-2 text-[11px]"
-            />
-            {(startDate || endDate || searchQuery) && (
-              <button onClick={clearFilters} className="p-2 text-red-500/40">
-                <X size={18} />
-              </button>
-            )}
+          <div className="flex gap-4">
+            <button
+              onClick={() => setShowFilters((v) => !v)}
+              className={`p-2.5 rounded-full transition-all ${
+                showFilters
+                  ? "bg-foreground text-background shadow-lg"
+                  : "text-muted-foreground/30 hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <Filter size={20} />
+            </button>
+            <button
+              onClick={handleSyncDay}
+              disabled={isGenerating}
+              className="p-2.5 bg-foreground text-background rounded-full disabled:opacity-30 active:scale-95 transition-all shadow-lg"
+            >
+              {isGenerating ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                <Sparkles size={20} />
+              )}
+            </button>
           </div>
-        </div>
-      )}
+        </header>
 
-      {/* LIST */}
+{/* FILTERS AREA */}
+{showFilters && (
+  <div className="px-6 pb-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+    {/* Поиск */}
+    <div className="relative">
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/30" size={16} />
+      <input
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search memories..."
+        className="w-full bg-muted/50 rounded-2xl py-3 pl-11 pr-4 text-sm outline-none focus:ring-1 focus:ring-foreground/10 transition-all"
+      />
+    </div>
+
+    {/* Календари (Даты) */}
+    <div className="grid grid-cols-2 gap-3"> 
+      <div className="relative flex flex-col gap-1">
+        <span className="text-[9px] uppercase tracking-widest text-muted-foreground/50 ml-2">From</span>
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="w-full bg-muted/50 rounded-xl px-4 py-3 text-sm outline-none focus:bg-muted/80 transition-all appearance-none"
+        />
+      </div>
+      <div className="relative flex flex-col gap-1">
+        <span className="text-[9px] uppercase tracking-widest text-muted-foreground/50 ml-2">To</span>
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="w-full bg-muted/50 rounded-xl px-4 py-3 text-sm outline-none focus:bg-muted/80 transition-all appearance-none"
+        />
+      </div>
+    </div>
+
+    {/* Кнопка сброса — показывается только если фильтры активны */}
+    {(startDate || endDate || searchQuery) && (
+      <button 
+        onClick={clearFilters} 
+        className="w-full py-2 text-[10px] uppercase tracking-widest text-red-500/60 hover:text-red-500 transition-colors border border-red-500/10 rounded-xl"
+      >
+        Reset Filters
+      </button>
+    )}
+  </div>
+)}      </div>
+
+      {/* SCROLLABLE LIST */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-6 pb-32">
         {loading ? (
           <div className="flex justify-center pt-20">
@@ -230,28 +230,28 @@ export default function DiaryPage() {
             <div
               key={page.id}
               onClick={() => setSelectedPage(page)}
-              className={`py-8 cursor-pointer ${
+              className={`py-10 cursor-pointer group ${
                 i !== 0 ? "border-t border-border/30" : ""
               }`}
             >
-              <div className="flex justify-between mb-1">
+              <div className="flex justify-between mb-2">
                 <span className="text-[10px] text-muted-foreground/40 uppercase tracking-widest">
                   Chapter {pages.length - i}
                 </span>
                 <span className="text-[10px] text-muted-foreground/40 italic">
-                  {new Date(page.date).toLocaleDateString("en-US")}
+                  {new Date(page.date).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
 
-              <h3 className="text-2xl font-serif font-bold mb-2">
+              <h3 className="text-2xl font-serif font-bold mb-3 group-hover:text-muted-foreground transition-colors">
                 {page.title}
               </h3>
 
-              <p className="text-[15px] text-muted-foreground/70 line-clamp-2 font-serif italic mb-4">
+              <p className="text-[16px] text-muted-foreground/70 line-clamp-2 font-serif italic mb-4 leading-relaxed">
                 {page.content}
               </p>
 
-              <div className="flex items-center gap-2 text-[9px] text-muted-foreground/60 uppercase">
+              <div className="flex items-center gap-2 text-[9px] text-muted-foreground/40 uppercase tracking-tight">
                 <BookOpen size={10} />
                 {page.word_count} words
               </div>
@@ -260,7 +260,7 @@ export default function DiaryPage() {
         )}
       </div>
 
-{/* ВМЕСТО СТАРОЙ МОДАЛКИ ПИШЕМ ЭТО: */}
+      {/* DYNAMIC MODAL */}
       {selectedPage && (
         <FullStoryModal 
           page={selectedPage}
