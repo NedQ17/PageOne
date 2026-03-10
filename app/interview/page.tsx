@@ -184,37 +184,6 @@ export default function InterviewPage() {
       {/* КОНТЕНТ: Скролл теперь будет работать четко внутри этой области */}
       <div className="flex-1 overflow-y-auto px-8 pb-48 space-y-6 touch-pan-y custom-scrollbar">
         
-        {/* Блок базовых вопросов (раскомментирован и поправлен) 
-        {baseData.length > 0 ? (
-          <div className="bg-muted/20 rounded-[2.5rem] p-8 border border-border/5 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="flex justify-between items-center mb-6">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/30 font-sans">Core Reflection</span>
-              <button onClick={() => setBaseData([])} className="p-1 text-muted-foreground/20 hover:text-red-500 transition-colors">
-                <X size={16}/>
-              </button>
-            </div>
-            <div className="space-y-6">
-              {baseData.map((item, i) => (
-                <div key={i} className="space-y-2">
-                  <p className="text-[10px] text-muted-foreground/40 uppercase font-mono tracking-tight leading-tight">{item.q}</p>
-                  <p className="text-[16px] text-foreground/90 leading-relaxed font-serif">{item.a}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <button 
-            onClick={() => startBlock('base')} 
-            className="w-full p-8 bg-muted/30 rounded-[2.5rem] text-left border border-border/5 hover:bg-muted/50 transition-all flex flex-col justify-between min-h-[160px] active:scale-[0.98] flex-shrink-0"
-          >
-            <Coffee size={24} className="text-muted-foreground/30" />
-            <div className="mt-8">
-              <h3 className="text-xl font-medium text-foreground font-serif">Base Reflection</h3>
-              <p className="text-[11px] text-muted-foreground/40 uppercase tracking-wide mt-1">Core daily questions</p>
-            </div>
-          </button>
-        )}*/}
-
         {/* Блок ИИ вопросов */}
         {aiData.length > 0 ? (
           <div className="bg-muted/20 rounded-[2.5rem] p-8 border border-border/5 animate-in fade-in slide-in-from-bottom-2 duration-500">

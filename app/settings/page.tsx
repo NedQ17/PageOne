@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { User, Check, ChevronLeft, BrainCircuit, LogOut } from "lucide-react";
+import { User, Check, ChevronLeft, LogOut } from "lucide-react";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -131,35 +131,6 @@ export default function SettingsPage() {
               rows={3}
             />
           </div>
-
-          {/* AI TOGGLE 
-          <div className="flex items-center justify-between p-6 bg-muted/50 rounded-3xl border border-border/5">
-            <div className="flex gap-4 items-center">
-              <BrainCircuit
-                size={24}
-                className={aiEnabled ? "text-foreground" : "text-muted-foreground/30"}
-              />
-              <div>
-                <p className="text-sm font-bold">AI Autopilot</p>
-                <p className="text-[10px] text-muted-foreground uppercase">
-                  Extract Shell entities
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setAiEnabled(!aiEnabled)}
-              className={`w-12 h-6 rounded-full transition-all relative ${
-                aiEnabled ? "bg-foreground" : "bg-muted-foreground/20"
-              }`}
-            >
-              <div
-                className={`absolute top-1 w-4 h-4 bg-background rounded-full transition-all ${
-                  aiEnabled ? "left-7" : "left-1"
-                }`}
-              />
-            </button>
-          </div> */}
 
           {/* SAVE */}
           <button

@@ -19,8 +19,16 @@ const FullStoryModal = dynamic(() => import("@/components/StoryModal"), {
   loading: () => <div className="fixed inset-0 bg-background/20 backdrop-blur-sm z-[100]" />
 });
 
+interface DiaryPage {
+  id: string;
+  date: string;
+  title: string;
+  content: string;
+  word_count: number;
+}
+
 export default function DiaryPage() {
-  const [pages, setPages] = useState<any[]>([]);
+  const [pages, setPages] = useState<DiaryPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -29,7 +37,7 @@ export default function DiaryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [selectedPage, setSelectedPage] = useState<any>(null);
+  const [selectedPage, setSelectedPage] = useState<DiaryPage | null>(null);
 
   /* ---------------- effects ---------------- */
 
@@ -95,8 +103,8 @@ export default function DiaryPage() {
       }
 
       await fetchPages();
-    } catch (e: any) {
-      alert(e.message);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to generate");
     } finally {
       setIsGenerating(false);
     }
@@ -116,8 +124,8 @@ export default function DiaryPage() {
 
       setPages((prev) => prev.filter((p) => p.id !== id));
       setSelectedPage(null);
-    } catch (e: any) {
-      alert("Error deleting: " + e.message);
+    } catch (e) {
+      alert("Error deleting: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setIsDeleting(false);
     }

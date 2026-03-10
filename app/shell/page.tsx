@@ -1,13 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
-import { 
-  Search, ChevronRight, Zap, Users, MapPin, 
-  Target, Plus, ArrowLeft, Loader2, Box, X 
+import {
+  Search, ChevronRight, Zap, Users, MapPin,
+  Target, Plus, ArrowLeft, Loader2, Box, X
 } from "lucide-react";
 
-const iconMap: Record<string, any> = {
+interface ShellItem {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  user_id: string;
+}
+
+interface ShellCategory {
+  name: string;
+  icon_name: string;
+  description: string;
+  id?: string;
+  user_id?: string;
+}
+
+const iconMap: Record<string, React.ElementType> = {
   "Core Values": Zap,
   "People": Users,
   "Places": MapPin,
@@ -16,8 +32,8 @@ const iconMap: Record<string, any> = {
 };
 
 export default function ShellPage() {
-  const [items, setItems] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [items, setItems] = useState<ShellItem[]>([]);
+  const [categories, setCategories] = useState<ShellCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -25,6 +41,7 @@ export default function ShellPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [newCatDesc, setNewCatDesc] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -73,9 +90,17 @@ export default function ShellPage() {
     }
   };
 
-  const getCount = (name: string) => items.filter(i => 
+  const getCount = (name: string) => items.filter(i =>
     i.category === name || (name === "Core Values" && i.category === "Values")
   ).length;
+
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return categories;
+    const q = searchQuery.toLowerCase();
+    return categories.filter(cat =>
+      cat.name.toLowerCase().includes(q) || cat.description.toLowerCase().includes(q)
+    );
+  }, [categories, searchQuery]);
 
   if (loading) return <div className="flex h-full items-center justify-center opacity-20"><Loader2 className="animate-spin" /></div>;
 
@@ -126,16 +151,18 @@ export default function ShellPage() {
           <div className="mb-8">
             <div className="bg-muted rounded-2xl p-3 flex items-center gap-3 border border-border/20">
               <Search size={18} className="text-muted-foreground/50" />
-              <input 
-                type="text" 
-                placeholder="Search your essence..." 
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search your essence..."
                 className="bg-transparent outline-none text-sm w-full placeholder:text-muted-foreground/30 text-foreground"
               />
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto no-scrollbar space-y-2">
-            {categories.map((cat) => {
+            {filteredCategories.map((cat) => {
               const Icon = iconMap[cat.icon_name] || Box;
               return (
                 <button 

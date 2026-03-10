@@ -58,7 +58,8 @@ export async function GET() {
     const result = JSON.parse(completion.choices[0].message.content || '{"questions": []}');
     return NextResponse.json(result);
 
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

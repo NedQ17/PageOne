@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'No entries to analyze' });
     }
 
-    const entriesText = entries.map((e: any) => e.content).join('\n---\n');
+    const entriesText = entries.map((e: { id: string; content: string }) => e.content).join('\n---\n');
 
     const systemPrompt = `You are a biographer. Extract key entities from user notes.
     Categories: People, Places, Goals, Values. 
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     const extracted = JSON.parse(content || '{"items": []}');
 
     if (extracted.items && extracted.items.length > 0) {
-      const itemsToInsert = extracted.items.map((item: any) => ({
+      const itemsToInsert = extracted.items.map((item: { category: string; title: string; description: string }) => ({
         category: item.category,
         title: item.title,
         description: item.description,
@@ -82,7 +82,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true, count: extracted.items.length });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

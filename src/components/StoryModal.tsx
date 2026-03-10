@@ -2,8 +2,16 @@
 
 import { X, Trash2, Loader2 } from "lucide-react";
 
+interface DiaryPage {
+  id: string;
+  date: string;
+  title: string;
+  content: string;
+  word_count: number;
+}
+
 interface FullStoryModalProps {
-  page: any;
+  page: DiaryPage;
   onClose: () => void;
   onDelete: (id: string) => void;
   isDeleting: boolean;
@@ -74,7 +82,7 @@ export default function FullStoryModal({
           </h2>
 
           <div className="space-y-8">
-            {page.content.split("\n").map((p: string, i: number) => (
+            {page.content.split("\n").map((p, i) => (
               <p
                 key={i}
                 className={`text-[19px] font-serif leading-relaxed ${

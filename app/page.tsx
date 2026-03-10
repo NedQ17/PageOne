@@ -57,9 +57,12 @@ export default function ThisDay() {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
     const fetchNotes = async () => {
-      // При смене даты можно оставить текущий экран, либо добавить легкий лоадер
       const { data: { user } } = await supabase.auth.getUser();
+      if (cancelled) return;
       if (!user) {
         router.push("/login");
         return;
@@ -78,6 +81,8 @@ export default function ThisDay() {
         .lte("created_at", endOfDay.toISOString())
         .order("created_at", { ascending: true });
 
+      if (cancelled) return;
+
       if (!error) {
         setNotes(
           (data || []).map((n) => ({
@@ -90,12 +95,15 @@ export default function ThisDay() {
           }))
         );
       }
-      // Выключаем загрузку только ПОСЛЕ того, как данные попали в state
       setIsInitialLoading(false);
-      setTimeout(scrollToBottom, 50);
+      timeoutId = setTimeout(scrollToBottom, 50);
     };
 
     fetchNotes();
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [router, selectedDate]);
 
   const addNote = async () => {
@@ -109,7 +117,7 @@ export default function ThisDay() {
       .select();
 
     if (!error && data?.[0]) {
-      const newNote = {
+      const newNote: Note = {
         id: data[0].id,
         text: data[0].content,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -239,12 +247,12 @@ export default function ThisDay() {
             </div>
           ))
         )}
-        <div className="h-32" />
+        <div className="h-24" />
       </div>
 
       {/* INPUT AREA */}
       {isToday && (
-        <div className="fixed bottom-0 left-0 right-0 px-6 pb-10 pt-6 bg-gradient-to-t from-background via-background/90 to-transparent z-20">
+        <div className="fixed bottom-[73px] left-0 right-0 px-6 pb-4 pt-6 bg-gradient-to-t from-background via-background/90 to-transparent z-20">
           <div className="max-w-screen-sm mx-auto bg-white dark:bg-zinc-100 rounded-[2.5rem] px-5 py-1.5 flex items-end gap-2 shadow-2xl border border-gray-200">
             <textarea
               ref={textareaRef}
