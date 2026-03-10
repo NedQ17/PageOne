@@ -40,7 +40,6 @@ export default function ThisDay() {
   const [entryDates, setEntryDates] = useState<Set<string>>(new Set());
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const formattedDate = useMemo(() => {
     return selectedDate.toLocaleDateString("en-US", {
@@ -55,12 +54,6 @@ export default function ThisDay() {
     return selectedDate.toDateString() === today.toDateString();
   }, [selectedDate]);
 
-  const scrollToBottom = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
-    }
-  };
-
   const changeDate = (days: number) => {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() + days);
@@ -70,7 +63,6 @@ export default function ThisDay() {
 
   useEffect(() => {
     let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout>;
 
     const fetchNotes = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -91,7 +83,7 @@ export default function ThisDay() {
         .eq("user_id", user.id)
         .gte("created_at", startOfDay.toISOString())
         .lte("created_at", endOfDay.toISOString())
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (cancelled) return;
 
@@ -108,13 +100,11 @@ export default function ThisDay() {
         );
       }
       setIsInitialLoading(false);
-      timeoutId = setTimeout(scrollToBottom, 50);
     };
 
     fetchNotes();
     return () => {
       cancelled = true;
-      clearTimeout(timeoutId);
     };
   }, [router, selectedDate]);
 
@@ -193,9 +183,8 @@ export default function ThisDay() {
         text: data[0].content,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
-      setNotes((prev) => [...prev, newNote]);
+      setNotes((prev) => [newNote, ...prev]);
       setInputValue("");
-      setTimeout(scrollToBottom, 100);
     }
   };
 
@@ -257,7 +246,6 @@ export default function ThisDay() {
 
       {/* SCROLLABLE CONTENT */}
       <div
-        ref={scrollContainerRef}
         className="overflow-y-auto px-6 py-4"
         style={{ height: "calc(100dvh - 120px)", WebkitOverflowScrolling: "touch" }}
       >
@@ -344,11 +332,12 @@ export default function ThisDay() {
 
       {showCalendar && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
           onClick={() => setShowCalendar(false)}
         >
           <div
-            className="bg-background w-full max-w-screen-sm rounded-t-[2.5rem] p-6 pb-10 shadow-2xl"
+            className="absolute left-4 right-4 max-w-screen-sm mx-auto bg-background rounded-[2.5rem] p-6 pb-8 shadow-2xl"
+            style={{ bottom: "calc(76px + max(16px, env(safe-area-inset-bottom)) + 70px)" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Calendar header */}
