@@ -8,7 +8,6 @@ import {
   Filter,
   Loader2,
   Sparkles,
-  X,
   BookOpen,
   Search,
 } from "lucide-react";
@@ -39,25 +38,20 @@ export default function DiaryPage() {
   const [endDate, setEndDate] = useState("");
   const [selectedPage, setSelectedPage] = useState<DiaryPage | null>(null);
 
-  /* ---------------- effects ---------------- */
-
   useEffect(() => {
     fetchPages();
   }, []);
 
-  // Блокировка скролла при открытой модалке
   useEffect(() => {
     document.body.style.overflow = selectedPage ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [selectedPage]);
 
-  /* ---------------- data ---------------- */
-
   const fetchPages = async () => {
     setLoading(true);
     const { data } = await supabase
       .from("daily_pages")
-      .select("*")
+      .select("id, date, title, content, word_count")
       .order("date", { ascending: false });
 
     setPages(data || []);
@@ -70,15 +64,12 @@ export default function DiaryPage() {
         page.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         page.content.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const pageDate = page.date;
-      const matchesStart = !startDate || pageDate >= startDate;
-      const matchesEnd = !endDate || pageDate <= endDate;
+      const matchesStart = !startDate || page.date >= startDate;
+      const matchesEnd = !endDate || page.date <= endDate;
 
       return matchesSearch && matchesStart && matchesEnd;
     });
   }, [pages, searchQuery, startDate, endDate]);
-
-  /* ---------------- actions ---------------- */
 
   const handleSyncDay = async () => {
     const today = new Date().toLocaleDateString("en-CA");

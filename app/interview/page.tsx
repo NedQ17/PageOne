@@ -3,23 +3,14 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { 
-  Sparkles, Coffee, Loader2, RefreshCw, X, ChevronLeft 
+import {
+  Sparkles, Loader2, RefreshCw, X
 } from "lucide-react";
-
-const BASE_QUESTIONS = [
-  "What was the highlight of your day?",
-  "What challenged you today?",
-  "What are you grateful for right now?",
-];
 
 export default function InterviewPage() {
   const router = useRouter();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [step, setStep] = useState<'menu' | 'asking'>('menu');
-  const [activeBlock, setActiveBlock] = useState<'base' | 'ai' | null>(null);
-  
-  const [baseData, setBaseData] = useState<{q: string, a: string}[]>([]);
   const [aiData, setAiData] = useState<{q: string, a: string}[]>([]);
   
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -29,47 +20,31 @@ export default function InterviewPage() {
   const [loadingAi, setLoadingAi] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Проверка сессии и скрытие загрузки только после готовности данных
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-      } else {
-        // Небольшая задержка, чтобы анимация сработала чисто
-        setTimeout(() => setIsInitialLoading(false), 100);
-      }
-    };
-    checkUser();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) router.push("/login");
+      else setIsInitialLoading(false);
+    });
   }, [router]);
 
-  const startBlock = async (type: 'base' | 'ai') => {
-    setActiveBlock(type);
-    if (type === 'base') {
-      setTempQuestions(BASE_QUESTIONS);
-      setTempAnswers(new Array(BASE_QUESTIONS.length).fill(""));
-      setCurrentIdx(0);
-      setStep('asking');
-    } else {
-      setLoadingAi(true);
-      try {
-        const res = await fetch('/api/interview-questions');
-        const data = await res.json();
-        const questionsArray = data.questions || [];
-        
-        if (questionsArray.length > 0) {
-          setTempQuestions(questionsArray);
-          setTempAnswers(new Array(questionsArray.length).fill(""));
-          setCurrentIdx(0);
-          setStep('asking');
-        } else {
-          alert("AI couldn't generate questions. Try writing more in Today.");
-        }
-      } catch (e) {
-        alert("Failed to load AI questions");
-      } finally {
-        setLoadingAi(false);
+  const startBlock = async () => {
+    setLoadingAi(true);
+    try {
+      const res = await fetch('/api/interview-questions');
+      const data = await res.json();
+      const questionsArray = data.questions || [];
+      if (questionsArray.length > 0) {
+        setTempQuestions(questionsArray);
+        setTempAnswers(new Array(questionsArray.length).fill(""));
+        setCurrentIdx(0);
+        setStep('asking');
+      } else {
+        alert("AI couldn't generate questions. Try writing more in Today.");
       }
+    } catch (e) {
+      alert("Failed to load AI questions");
+    } finally {
+      setLoadingAi(false);
     }
   };
 
@@ -81,9 +56,7 @@ export default function InterviewPage() {
     if (currentIdx < tempQuestions.length - 1) {
       setCurrentIdx(currentIdx + 1);
     } else {
-      const finalData = tempQuestions.map((q, i) => ({ q, a: newAnswers[i] }));
-      if (activeBlock === 'base') setBaseData(finalData);
-      if (activeBlock === 'ai') setAiData(finalData);
+      setAiData(tempQuestions.map((q, i) => ({ q, a: newAnswers[i] })));
       setStep('menu');
     }
   };
@@ -94,11 +67,11 @@ export default function InterviewPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const allResponses = [...baseData, ...aiData].map(item => ({
+      const allResponses = aiData.map(item => ({
         user_id: user.id,
         question: item.q,
         answer: item.a,
-        type: baseData.some(b => b.q === item.q) ? 'base' : 'ai'
+        type: 'ai',
       }));
 
       const { error } = await supabase.from('interview_responses').insert(allResponses);
@@ -112,18 +85,19 @@ export default function InterviewPage() {
     }
   };
 
-  // 1. Пустой экран во время инициализации (предотвращает вспышки контента)
-  if (isInitialLoading) {
-    return <div className="h-full bg-background" />;
-  }
+  if (isInitialLoading) return <div className="h-full bg-background" />;
 
-  // 2. Режим ответа на вопросы
   if (step === 'asking') return (
     <div className="flex flex-col h-full bg-background animate-question font-sans">
-      <div className="flex-1 flex flex-col justify-center px-10 text-center space-y-8">
-        <div className="w-14 h-14 bg-muted/50 rounded-2xl mx-auto flex items-center justify-center text-foreground">
-          {activeBlock === 'base' ? <Coffee size={24} strokeWidth={1.5}/> : <Sparkles size={24} strokeWidth={1.5}/>}
-        </div>
+      <div className="flex justify-end px-6 pt-12">
+        <button
+          onClick={() => setStep('menu')}
+          className="p-2 text-muted-foreground/30 hover:text-foreground transition-colors"
+        >
+          <X size={22} />
+        </button>
+      </div>
+      <div className="flex-1 flex flex-col justify-center px-10 pt-16 text-center space-y-8">
         <h2 className="text-2xl font-serif font-medium leading-tight text-foreground px-2">
           {tempQuestions[currentIdx]}
         </h2>
@@ -161,30 +135,14 @@ export default function InterviewPage() {
     </div>
   );
 
-// 3. Главное меню интервью
   return (
-    /* h-[100dvh] гарантирует, что на мобилках высота будет ровно по экрану */
     <div className="flex flex-col h-[100dvh] bg-background font-sans animate-question overflow-hidden">
-      
-      {/* HEADER: Добавлен flex-shrink-0, чтобы заголовок не уползал */}
-      <header className="px-8 pt-12 pb-6 flex flex-col gap-6 bg-background z-20 flex-shrink-0">
-        <button 
-          onClick={() => router.push('/')} 
-          className="flex items-center gap-2 text-muted-foreground/40 hover:text-foreground transition-colors w-fit"
-        >
-          <ChevronLeft size={18} />
-          <span className="text-[10px] uppercase tracking-widest font-bold">Today</span>
-        </button>
-        <div>
-          <h1 className="text-4xl font-serif font-bold tracking-tight text-foreground">Interview</h1>
-          <p className="text-muted-foreground/40 text-[10px] uppercase tracking-widest mt-2">Synthesize your day</p>
-        </div>
+      <header className="px-8 pt-12 pb-6 bg-background z-20 flex-shrink-0">
+        <h1 className="text-4xl font-serif font-bold tracking-tight text-foreground">Interview</h1>
+        <p className="text-muted-foreground/40 text-[10px] uppercase tracking-widest mt-2">Synthesize your day</p>
       </header>
 
-      {/* КОНТЕНТ: Скролл теперь будет работать четко внутри этой области */}
       <div className="flex-1 overflow-y-auto px-8 pb-48 space-y-6 touch-pan-y no-scrollbar">
-        
-        {/* Блок ИИ вопросов */}
         {aiData.length > 0 ? (
           <div className="bg-muted/20 rounded-[2.5rem] p-8 border border-border/5 animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="flex justify-between items-center mb-6">
@@ -203,8 +161,8 @@ export default function InterviewPage() {
             </div>
           </div>
         ) : (
-          <button 
-            onClick={() => startBlock('ai')} 
+          <button
+            onClick={startBlock}
             disabled={loadingAi}
             className="w-full p-8 bg-foreground text-background rounded-[2.5rem] text-left hover:opacity-90 transition-all flex flex-col justify-between min-h-[160px] relative overflow-hidden active:scale-[0.98] disabled:opacity-80 flex-shrink-0"
           >
@@ -251,8 +209,7 @@ export default function InterviewPage() {
         </div>
       </div>
 
-{/* КНОПКА ЗАВЕРШЕНИЯ: Теперь с безопасным отступом снизу */}
-      {(baseData.length > 0 || aiData.length > 0) && (
+      {aiData.length > 0 && (
         <div className="shrink-0 px-8 pb-10 pt-4 bg-gradient-to-t from-background via-background to-transparent sticky bottom-0 z-30">
           <button 
             onClick={finalize}
@@ -269,7 +226,6 @@ export default function InterviewPage() {
             )}
           </button>
           
-          {/* Динамический отступ для Safe Area на iPhone (челка снизу) */}
           <div className="h-[env(safe-area-inset-bottom)]" />
         </div>
       )}

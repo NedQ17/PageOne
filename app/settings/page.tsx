@@ -64,22 +64,16 @@ export default function SettingsPage() {
       .eq("id", user?.id);
 
     router.push("/");
-    router.refresh();
     setSaving(false);
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
-    router.refresh();
   };
 
   if (loading) {
-    return (
-      <div className="p-8 font-serif animate-pulse text-muted-foreground">
-        Loading...
-      </div>
-    );
+    return <div className="h-full bg-background" />;
   }
 
   return (

@@ -16,7 +16,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background px-8 justify-center animate-question">
+    <div className="flex flex-col h-full bg-background px-8 pt-safe justify-center animate-question">
       <div className="mb-12">
         <h1 className="text-4xl font-serif font-bold tracking-tight text-foreground">
           Welcome

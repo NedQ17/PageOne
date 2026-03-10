@@ -68,7 +68,6 @@ export default function ThisDay() {
     setEditingId(null);
   };
 
-  // Fetch notes for selected day
   useEffect(() => {
     let cancelled = false;
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -88,7 +87,7 @@ export default function ThisDay() {
 
       const { data, error } = await supabase
         .from("entries")
-        .select("*")
+        .select("id, content, created_at")
         .eq("user_id", user.id)
         .gte("created_at", startOfDay.toISOString())
         .lte("created_at", endOfDay.toISOString())
@@ -119,7 +118,6 @@ export default function ThisDay() {
     };
   }, [router, selectedDate]);
 
-  // Fetch entry dates for the visible calendar month
   useEffect(() => {
     if (!showCalendar) return;
     let cancelled = false;
@@ -151,7 +149,6 @@ export default function ThisDay() {
     return () => { cancelled = true; };
   }, [showCalendar, calendarMonth]);
 
-  // Build calendar grid (Mon-first)
   const calendarDays = useMemo(() => {
     const year = calendarMonth.getFullYear();
     const month = calendarMonth.getMonth();
@@ -256,22 +253,13 @@ export default function ThisDay() {
             <ChevronRight size={20} />
           </button>
         </div>
-
-        <div className="flex gap-1">
-          <button className="p-2 text-muted-foreground hover:text-foreground transition-all" onClick={() => router.push("/settings")}>
-            <User size={20} strokeWidth={1.5} />
-          </button>
-          <button className="p-2 text-muted-foreground hover:text-foreground transition-all active:scale-90" onClick={() => router.push("/interview")}>
-            <CheckCircle2 size={22} strokeWidth={1.5} />
-          </button>
-        </div>
       </header>
 
       {/* SCROLLABLE CONTENT */}
       <div
         ref={scrollContainerRef}
         className="overflow-y-auto px-6 py-4"
-        style={{ height: "calc(100dvh - 120px)" }}
+        style={{ height: "calc(100dvh - 120px)", WebkitOverflowScrolling: "touch" }}
       >
         {notes.length === 0 ? (
           <div className="h-full flex items-center justify-center pt-20">
@@ -320,7 +308,7 @@ export default function ThisDay() {
             </div>
           ))
         )}
-        <div className="h-24" />
+        <div className="h-[160px]" />
       </div>
 
       {/* INPUT AREA */}
@@ -350,6 +338,7 @@ export default function ThisDay() {
       )}
 
       {/* CALENDAR MODAL */}
+
       {showCalendar && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"

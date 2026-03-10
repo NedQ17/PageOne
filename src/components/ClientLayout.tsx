@@ -12,7 +12,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <main className="relative h-[100dvh] max-w-screen-sm mx-auto flex flex-col shadow-2xl bg-background border-x border-border/5">
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 relative flex flex-col min-h-0">
         {children}
       </div>
       {showTabBar && <TabBar />}
