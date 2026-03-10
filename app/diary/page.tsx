@@ -137,6 +137,10 @@ export default function DiaryPage() {
     setEndDate("");
   };
 
+  if (loading) {
+    return <div className="h-full bg-background" />;
+  }
+
   return (
     <div className="flex flex-col h-[100dvh] bg-background font-sans animate-question">
       
@@ -220,15 +224,12 @@ export default function DiaryPage() {
       </button>
     )}
   </div>
-)}      </div>
+)}
+      </div>
 
       {/* SCROLLABLE LIST */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-6 pb-32">
-        {loading ? (
-          <div className="flex justify-center pt-20">
-            <Loader2 className="animate-spin opacity-20" />
-          </div>
-        ) : filteredPages.length === 0 ? (
+        {filteredPages.length === 0 ? (
           <div className="text-center pt-32 opacity-20">
             <Calendar size={40} className="mx-auto mb-4" />
             <p className="text-xs uppercase tracking-widest">No entries found</p>

@@ -182,7 +182,7 @@ export default function InterviewPage() {
       </header>
 
       {/* КОНТЕНТ: Скролл теперь будет работать четко внутри этой области */}
-      <div className="flex-1 overflow-y-auto px-8 pb-48 space-y-6 touch-pan-y custom-scrollbar">
+      <div className="flex-1 overflow-y-auto px-8 pb-48 space-y-6 touch-pan-y no-scrollbar">
         
         {/* Блок ИИ вопросов */}
         {aiData.length > 0 ? (
@@ -224,6 +224,31 @@ export default function InterviewPage() {
             )}
           </button>
         )}
+
+        {/* How it works */}
+        <div className="pt-2 pb-4 space-y-5">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/25">How it works</p>
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <span className="text-[10px] font-mono text-muted-foreground/20 pt-0.5 flex-shrink-0">01</span>
+              <p className="text-[13px] text-muted-foreground/40 leading-relaxed font-serif">
+                AI reads your notes from today and generates 5 questions tailored specifically to what you wrote — your events, emotions, and details.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <span className="text-[10px] font-mono text-muted-foreground/20 pt-0.5 flex-shrink-0">02</span>
+              <p className="text-[13px] text-muted-foreground/40 leading-relaxed font-serif">
+                Answer each question in your own words. There are no right or wrong answers — just your honest reflection on the day.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <span className="text-[10px] font-mono text-muted-foreground/20 pt-0.5 flex-shrink-0">03</span>
+              <p className="text-[13px] text-muted-foreground/40 leading-relaxed font-serif">
+                When you tap Complete Reflection, your answers are saved. They become the source material for generating your diary page — a personal narrative of the day written in your voice.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
 {/* КНОПКА ЗАВЕРШЕНИЯ: Теперь с безопасным отступом снизу */}
