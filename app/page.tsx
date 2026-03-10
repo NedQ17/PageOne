@@ -313,7 +313,10 @@ export default function ThisDay() {
 
       {/* INPUT AREA */}
       {isToday && (
-        <div className="fixed bottom-[73px] left-0 right-0 px-6 pb-4 pt-6 bg-gradient-to-t from-background via-background/90 to-transparent z-20">
+        <div
+          className="fixed left-0 right-0 px-6 pt-6 z-[60]"
+          style={{ bottom: "calc(76px + max(16px, env(safe-area-inset-bottom)))" }}
+        >
           <div className="max-w-screen-sm mx-auto bg-white dark:bg-zinc-100 rounded-[2.5rem] px-5 py-1.5 flex items-end gap-2 shadow-2xl border border-gray-200">
             <textarea
               ref={textareaRef}
