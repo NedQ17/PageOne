@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash2,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -17,15 +18,26 @@ interface Note {
   time: string;
 }
 
+const DAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+
 export default function ThisDay() {
   const router = useRouter();
   const [notes, setNotes] = useState<Note[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isInitialLoading, setIsInitialLoading] = useState(true); // Состояние для предотвращения скачков
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+
+  // Calendar state
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    return d;
+  });
+  const [entryDates, setEntryDates] = useState<Set<string>>(new Set());
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -56,6 +68,7 @@ export default function ThisDay() {
     setEditingId(null);
   };
 
+  // Fetch notes for selected day
   useEffect(() => {
     let cancelled = false;
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -106,6 +119,67 @@ export default function ThisDay() {
     };
   }, [router, selectedDate]);
 
+  // Fetch entry dates for the visible calendar month
+  useEffect(() => {
+    if (!showCalendar) return;
+    let cancelled = false;
+
+    const fetchEntryDates = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (cancelled || !user) return;
+
+      const start = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+      const end = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      const { data } = await supabase
+        .from("entries")
+        .select("created_at")
+        .eq("user_id", user.id)
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString());
+
+      if (cancelled) return;
+
+      const dates = new Set((data || []).map((e) => {
+        const d = new Date(e.created_at);
+        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      }));
+      setEntryDates(dates);
+    };
+
+    fetchEntryDates();
+    return () => { cancelled = true; };
+  }, [showCalendar, calendarMonth]);
+
+  // Build calendar grid (Mon-first)
+  const calendarDays = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const offset = firstDow === 0 ? 6 : firstDow - 1; // shift to Mon-first
+    const cells: (Date | null)[] = Array(offset).fill(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }, [calendarMonth]);
+
+  const hasEntry = (d: Date) =>
+    entryDates.has(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+
+  const openCalendar = () => {
+    const m = new Date(selectedDate);
+    m.setDate(1);
+    setCalendarMonth(m);
+    setShowCalendar(true);
+  };
+
+  const selectDay = (d: Date) => {
+    setSelectedDate(d);
+    setEditingId(null);
+    setShowCalendar(false);
+  };
+
   const addNote = async () => {
     if (!inputValue.trim()) return;
     const { data: { user } } = await supabase.auth.getUser();
@@ -153,11 +227,11 @@ export default function ThisDay() {
     }
   }, [inputValue]);
 
-  // Если данные еще грузятся, показываем пустой экран того же цвета, что и фон, 
-  // чтобы не было вспышек белого или пустых блоков хедера
   if (isInitialLoading) {
     return <div className="h-full bg-background" />;
   }
+
+  const today = new Date();
 
   return (
     <div className="flex flex-col h-full bg-background animate-question font-sans selection:bg-foreground selection:text-background">
@@ -167,14 +241,14 @@ export default function ThisDay() {
           <button onClick={() => changeDate(-1)} className="p-1 hover:bg-muted rounded-full text-muted-foreground/40 hover:text-foreground transition-colors">
             <ChevronLeft size={20} />
           </button>
-          <div>
+          <button onClick={openCalendar} className="text-left">
             <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground">
               {isToday ? "Today" : selectedDate.toLocaleDateString("en-US", { day: "numeric", month: "short" })}
             </h1>
             <p className="text-muted-foreground font-sans text-[10px] uppercase tracking-widest mt-1 opacity-50">
               {formattedDate}
             </p>
-          </div>
+          </button>
           <button
             onClick={() => changeDate(1)}
             className={`p-1 hover:bg-muted rounded-full text-muted-foreground/40 hover:text-foreground transition-colors ${isToday ? "opacity-0 pointer-events-none" : ""}`}
@@ -194,12 +268,11 @@ export default function ThisDay() {
       </header>
 
       {/* SCROLLABLE CONTENT */}
-<div
-  ref={scrollContainerRef}
-  className="overflow-y-auto px-6 py-4"
-  style={{ height: "calc(100dvh - 120px)" }}
->
-
+      <div
+        ref={scrollContainerRef}
+        className="overflow-y-auto px-6 py-4"
+        style={{ height: "calc(100dvh - 120px)" }}
+      >
         {notes.length === 0 ? (
           <div className="h-full flex items-center justify-center pt-20">
             <p className="text-muted-foreground/30 text-[10px] uppercase tracking-widest text-center">
@@ -272,6 +345,84 @@ export default function ThisDay() {
             >
               <Send size={16} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* CALENDAR MODAL */}
+      {showCalendar && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setShowCalendar(false)}
+        >
+          <div
+            className="bg-background w-full max-w-screen-sm rounded-t-[2.5rem] p-6 pb-10 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Calendar header */}
+            <div className="flex items-center justify-between mb-6">
+              <button
+                onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}
+                className="p-2 text-muted-foreground/50 hover:text-foreground transition-colors"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <span className="text-sm font-bold uppercase tracking-widest text-foreground">
+                {calendarMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
+                  className="p-2 text-muted-foreground/50 hover:text-foreground transition-colors"
+                >
+                  <ChevronRight size={20} />
+                </button>
+                <button
+                  onClick={() => setShowCalendar(false)}
+                  className="p-2 text-muted-foreground/50 hover:text-foreground transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Day labels */}
+            <div className="grid grid-cols-7 mb-2">
+              {DAY_LABELS.map((d) => (
+                <div key={d} className="text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/30 py-1">
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            {/* Days grid */}
+            <div className="grid grid-cols-7 gap-y-1">
+              {calendarDays.map((day, i) => {
+                if (!day) return <div key={i} />;
+
+                const isSelectedDay = day.toDateString() === selectedDate.toDateString();
+                const isTodayCell = day.toDateString() === today.toDateString();
+                const hasNote = hasEntry(day);
+
+                return (
+                  <button
+                    key={i}
+                    onClick={() => selectDay(day)}
+                    className={`
+                      relative flex flex-col items-center justify-center h-10 rounded-xl transition-all active:scale-90
+                      ${isSelectedDay ? "bg-foreground text-background" : isTodayCell ? "bg-muted text-foreground" : "text-foreground/70 hover:bg-muted/60"}
+                    `}
+                  >
+                    <span className={`text-sm font-medium ${isSelectedDay ? "font-bold" : ""}`}>
+                      {day.getDate()}
+                    </span>
+                    {hasNote && (
+                      <span className={`absolute bottom-1 w-1 h-1 rounded-full ${isSelectedDay ? "bg-background/60" : "bg-foreground/40"}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
