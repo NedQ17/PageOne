@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Trash2,
   X,
+  LogOut,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -242,6 +243,12 @@ export default function ThisDay() {
             <ChevronRight size={20} />
           </button>
         </div>
+        <button
+          onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
+          className="p-2 text-muted-foreground/30 hover:text-foreground transition-colors"
+        >
+          <LogOut size={18} />
+        </button>
       </header>
 
       {/* SCROLLABLE CONTENT */}
