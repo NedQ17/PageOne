@@ -1,0 +1,214 @@
+PAGE ONE — AI-POWERED PERSONAL DIARY
+=====================================
+A mobile-first Progressive Web App for daily reflection and autobiographical writing.
+
+
+OVERVIEW
+--------
+Page One is a journaling application that transforms raw daily thoughts into polished,
+prose-form diary entries. The user captures moments and observations throughout the day,
+then undergoes a short AI-guided interview, and the app synthesizes everything into a
+literary narrative — a personal archive written in the user's own voice and language.
+
+The name "Page One" reflects the idea that every day is worth remembering, and every
+life deserves to be written down.
+
+
+CORE CONCEPT
+------------
+Most people don't keep a diary because writing is hard. Page One removes that friction
+by splitting the process into three lightweight steps:
+
+  1. CAPTURE — Throughout the day, the user records short notes: observations, events,
+     feelings, ideas. No structure required. Just raw thought.
+
+  2. REFLECT — At the end of the day, an AI reads the notes and generates 5 questions
+     tailored specifically to what was written — names, places, emotions, decisions.
+     The user answers each question in a few sentences.
+
+  3. SYNTHESIZE — The AI combines the raw notes and interview answers into a finished
+     diary entry: a 3–4 paragraph prose narrative, titled, written in the user's native
+     language, in a literary but personal style.
+
+The result is a growing archive of life — days that would otherwise be forgotten,
+preserved as readable stories.
+
+
+LANGUAGE SUPPORT
+----------------
+The app detects the language of the user's notes and generates all AI output —
+questions and diary narratives — in that language. Russian and English are the primary
+supported languages. Responses are never translated; they are generated natively.
+
+
+USER FLOW
+---------
+Day starts:
+  - User opens the Today tab.
+  - Writes notes freely throughout the day using the input capsule at the bottom.
+  - Notes appear newest-first, timestamped.
+  - User can double-tap any note to edit it.
+
+End of day:
+  - User opens the Interview tab.
+  - Taps "AI Insights" — the app fetches today's notes and generates 5 questions.
+  - User answers each question one by one (step 1 of 5, etc.).
+  - After finishing, user taps "Complete Reflection" — answers are saved.
+
+Diary generation:
+  - From the Diary tab, user taps the sync button for today's date.
+  - The app calls the generation API with notes + interview answers.
+  - A prose diary page is created and stored with a title and word count.
+  - The entry appears in the Diary archive and can be read in full via a modal.
+
+
+PAGES AND NAVIGATION
+--------------------
+The app uses a fixed bottom navigation bar with three tabs:
+
+  TODAY (/):
+    The main capture screen. Shows the selected date with prev/next navigation.
+    A calendar popup (triggered by tapping the date) allows jumping to any past day.
+    The input capsule is visible only when viewing today (past days are read-only).
+    Notes are ordered newest-first.
+
+  INTERVIEW (/interview):
+    Two states: menu (idle) and asking (active interview).
+    In asking mode, one question is shown at a time with a text input.
+    Progress is shown (e.g. "Step 2 of 5").
+    Answers are held in temporary state until "Complete Reflection" is tapped.
+    Once saved, the answers are stored and the view returns to menu with answers shown.
+
+  DIARY (/diary):
+    Archive of all generated diary pages.
+    Supports full-text search and date range filtering.
+    Each entry shows title, date, and word count.
+    Tapping an entry opens a full-screen reading modal (StoryModal).
+    The sync button triggers AI diary page generation for a given day.
+
+
+ADDITIONAL PAGES
+----------------
+  LOGIN (/login):
+    Email/password authentication and Google OAuth via Supabase.
+    Auto-redirects to Today if already authenticated.
+
+  SHELL (/shell) — hidden, development feature:
+    A personal knowledge base that extracts recurring entities from entries:
+    People, Places, Long-term Goals, Core Values.
+    Powered by the /api/extract endpoint.
+    Not exposed in the main navigation.
+
+
+AI ARCHITECTURE
+---------------
+All AI is routed through OpenRouter using the OpenAI SDK.
+Primary model: gpt-4o-mini (cost-efficient, fast).
+
+Three API routes handle AI work:
+
+  GET /api/interview-questions
+    - Reads today's entries for the authenticated user (from midnight UTC).
+    - Sends them to the model with a prompt to generate 5 reflective questions.
+    - Questions reference specific names, events, and emotions from the notes.
+    - Returns a JSON array of question strings.
+
+  POST /api/generate-diary-page
+    - Receives notes (array of strings) and interview responses (Q&A pairs).
+    - Prompts the model to write a personal diary narrative.
+    - Rules: prose only (no lists, no verse), 3–4 paragraphs, personal tone.
+    - Returns title (string) + content (string).
+    - Saves result to the daily_pages table.
+    - Clears interview_responses after generation.
+
+  POST /api/extract
+    - Reads the 15 most recent entries.
+    - Extracts structured entities: People, Places, Goals, Values.
+    - Requires ai_extraction_enabled = true in user profile.
+    - Saves items to the shell_items table.
+
+
+DATABASE SCHEMA (Supabase / PostgreSQL) (contains unused tables due to ongoing development process)
+----------------------------------------
+  profiles
+    id            uuid (FK → auth.users)
+    full_name     text
+    bio           text
+    ai_extraction_enabled  boolean (default: true)
+    updated_at    timestamp
+
+  entries
+    id            uuid
+    user_id       uuid (FK)
+    content       text
+    created_at    timestamptz
+
+  interview_responses
+    id            uuid
+    user_id       uuid (FK)
+    question      text
+    answer        text
+    type          text ('ai')
+    created_at    timestamptz
+
+  daily_pages
+    id            uuid
+    user_id       uuid (FK)
+    date          date (unique per user)
+    title         text
+    content       text
+    word_count    integer
+    created_at    timestamptz
+
+  shell_items
+    id            uuid
+    user_id       uuid (FK)
+    category      text
+    title         text
+    description   text
+
+  shell_categories
+    id            uuid
+    user_id       uuid (FK)
+    name          text
+    description   text
+    icon_name     text
+
+
+TECH STACK
+----------
+  Framework:      Next.js 16 (App Router), React 19, TypeScript 5
+  Auth & DB:      Supabase (PostgreSQL + Auth)
+  Styling:        Tailwind CSS v4, custom CSS variables, dark/light mode
+  Icons:          lucide-react
+  AI:             OpenAI SDK via OpenRouter (gpt-4o-mini)
+  Fonts:          Inter (sans-serif), Lora (serif) — Google Fonts, incl. Cyrillic
+  PWA:            manifest.json, apple-touch-icon, viewport-fit=cover
+
+
+DESIGN PRINCIPLES
+-----------------
+  - Mobile-first. Designed for iPhone use as a PWA (Add to Home Screen).
+  - Minimal friction. The fewest taps possible to capture and reflect.
+  - Typography-forward. Lora serif for content, Inter sans for UI chrome.
+  - Dark and light mode both first-class, following system preference.
+  - No pagination or infinite scroll — day-based navigation keeps context clear.
+  - Safe area awareness for notched devices (env(safe-area-inset-*)).
+  - Scroll fade masks (CSS mask-image) for soft content edges on all list views.
+
+
+PRIVACY MODEL
+-------------
+Each user's data is isolated by user_id at the row level in Supabase.
+Row-Level Security (RLS) policies ensure users can only read and write their own data.
+AI API calls are server-side only — raw notes never leave the server unencrypted.
+
+
+FUTURE DIRECTIONS (POTENTIAL)
+------------------------------
+  - Weekly and monthly summary pages
+  - Mood tracking via AI sentiment analysis
+  - Export to PDF or EPUB
+  - Voice input for notes
+  - Shared diary pages (optional, opt-in)
+  - Reminders / daily prompts via push notifications

@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare, Library, BookOpen, Sparkles } from 'lucide-react';
+import { MessageSquare, BookOpen, Sparkles, ScrollText } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -9,8 +9,8 @@ export const TabBar = () => {
 
   const navItems = [
     { name: 'Today', href: '/', icon: MessageSquare },
-    { name: 'Interview', href: '/interview', icon: Sparkles }, // Новый раздел
-   // { name: 'Shell', href: '/shell', icon: Library },
+    { name: 'Interview', href: '/interview', icon: Sparkles },
+    { name: 'Chronicle', href: '/chronicle', icon: ScrollText },
     { name: 'Diary', href: '/diary', icon: BookOpen },
   ];
 
