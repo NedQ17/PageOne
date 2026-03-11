@@ -426,6 +426,7 @@ export default function ThisDay() {
         </div>
       )}
 
+
       {/* HELP MODAL */}
       {showHelp && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowHelp(false)}>
