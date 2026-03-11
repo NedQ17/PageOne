@@ -150,9 +150,9 @@ export default function ChroniclePage() {
 
       {/* CREATE MODAL */}
       {showCreate && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm">
           <div
-            className="w-full max-w-screen-sm bg-background rounded-t-[2.5rem] p-6 pb-10 shadow-2xl"
+            className="w-full max-w-screen-sm bg-background rounded-[2.5rem] p-6 pb-8 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* modal header */}
@@ -165,23 +165,23 @@ export default function ChroniclePage() {
 
             {/* date range */}
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground/50 mb-2">Date Range</p>
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              <div>
-                <label className="text-[9px] uppercase tracking-widest text-muted-foreground/40 ml-1">From</label>
+            <div className="flex flex-col gap-2 mb-5">
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground/40 w-8 shrink-0">From</span>
                 <input
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="mt-1 w-full bg-muted/50 rounded-2xl py-3 px-4 text-sm outline-none focus:ring-1 focus:ring-foreground/10"
+                  className="flex-1 bg-muted/50 rounded-2xl py-2.5 px-4 text-sm outline-none focus:ring-1 focus:ring-foreground/10"
                 />
               </div>
-              <div>
-                <label className="text-[9px] uppercase tracking-widest text-muted-foreground/40 ml-1">To</label>
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground/40 w-8 shrink-0">To</span>
                 <input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="mt-1 w-full bg-muted/50 rounded-2xl py-3 px-4 text-sm outline-none focus:ring-1 focus:ring-foreground/10"
+                  className="flex-1 bg-muted/50 rounded-2xl py-2.5 px-4 text-sm outline-none focus:ring-1 focus:ring-foreground/10"
                 />
               </div>
             </div>
