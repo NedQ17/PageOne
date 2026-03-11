@@ -17,9 +17,9 @@ export const TabBar = () => {
   return (
     <nav
       className="fixed bottom-0 inset-x-0 bg-background border-t border-border/40 px-4 z-50 transition-colors duration-300"
-      style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
+      style={{ paddingBottom: 0 }}
     >
-      <div className="flex justify-around items-center h-14 max-w-screen-sm mx-auto">
+      <div className="flex justify-around items-center pt-2 pb-1 max-w-screen-sm mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
