@@ -44,6 +44,7 @@ export default function ThisDay() {
   const [entryDates, setEntryDates] = useState<Set<string>>(new Set());
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const formattedDate = useMemo(() => {
     return selectedDate.toLocaleDateString("en-US", {
@@ -217,6 +218,13 @@ export default function ThisDay() {
     }
   }, [inputValue]);
 
+  useEffect(() => {
+    if (editTextareaRef.current) {
+      editTextareaRef.current.style.height = "auto";
+      editTextareaRef.current.style.height = `${editTextareaRef.current.scrollHeight}px`;
+    }
+  }, [editValue, editingId]);
+
   if (isInitialLoading) {
     return <div className="h-full bg-background" />;
   }
@@ -286,6 +294,7 @@ export default function ThisDay() {
               {editingId === note.id ? (
                 <div className="relative group/edit mt-2">
                   <textarea
+                    ref={editTextareaRef}
                     autoFocus
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
@@ -293,8 +302,8 @@ export default function ThisDay() {
                       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(note.id); }
                       if (e.key === "Escape") setEditingId(null);
                     }}
-                    className="w-full p-4 pb-14 bg-muted/30 rounded-2xl border border-border/50 text-lg leading-relaxed resize-none focus:outline-none font-serif"
-                    rows={Math.max(3, editValue.split("\n").length)}
+                    className="w-full p-4 pb-14 bg-muted/30 rounded-2xl border border-border/50 text-lg leading-relaxed resize-none focus:outline-none font-serif overflow-hidden"
+                    rows={1}
                   />
                   <div className="absolute bottom-3 left-3">
                     <button onClick={() => deleteNote(note.id)} className="p-2 text-red-500/40 hover:text-red-600 transition-all">
