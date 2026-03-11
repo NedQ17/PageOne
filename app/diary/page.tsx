@@ -247,7 +247,7 @@ export default function DiaryPage() {
                 {page.title}
               </h3>
 
-              <p className="text-[16px] text-muted-foreground/70 line-clamp-2 font-serif italic mb-4 leading-relaxed">
+              <p className="text-[1rem] text-muted-foreground/70 line-clamp-2 font-serif italic mb-4 leading-relaxed">
                 {page.content}
               </p>
 

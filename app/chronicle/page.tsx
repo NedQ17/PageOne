@@ -136,7 +136,7 @@ export default function ChroniclePage() {
               <h3 className="text-2xl font-serif font-bold mb-3 group-hover:text-muted-foreground transition-colors leading-tight">
                 {c.title}
               </h3>
-              <p className="text-[16px] text-muted-foreground/70 line-clamp-2 font-serif italic mb-4 leading-relaxed">
+              <p className="text-[1rem] text-muted-foreground/70 line-clamp-2 font-serif italic mb-4 leading-relaxed">
                 {c.content}
               </p>
               <div className="flex items-center gap-2 text-[9px] text-muted-foreground/40 uppercase tracking-tight">
@@ -270,7 +270,7 @@ export default function ChroniclePage() {
                 {selected.content.split("\n").filter(Boolean).map((p, i) => (
                   <p
                     key={i}
-                    className={`text-[19px] font-serif leading-relaxed ${
+                    className={`text-[1.1875rem] font-serif leading-relaxed ${
                       i === 0 ? "first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left" : ""
                     }`}
                   >

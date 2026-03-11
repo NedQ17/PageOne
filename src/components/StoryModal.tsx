@@ -85,7 +85,7 @@ export default function FullStoryModal({
             {page.content.split("\n").map((p, i) => (
               <p
                 key={i}
-                className={`text-[19px] font-serif leading-relaxed ${
+                className={`text-[1.1875rem] font-serif leading-relaxed ${
                   i === 0
                     ? "first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left"
                     : ""
