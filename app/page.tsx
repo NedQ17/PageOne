@@ -9,6 +9,7 @@ import {
   Trash2,
   X,
   LogOut,
+  HelpCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -30,6 +31,8 @@ export default function ThisDay() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+
+  const [showHelp, setShowHelp] = useState(false);
 
   // Calendar state
   const [showCalendar, setShowCalendar] = useState(false);
@@ -243,12 +246,20 @@ export default function ThisDay() {
             <ChevronRight size={20} />
           </button>
         </div>
-        <button
-          onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
-          className="p-2 text-muted-foreground/30 hover:text-foreground transition-colors"
-        >
-          <LogOut size={18} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowHelp(true)}
+            className="p-2 text-muted-foreground/30 hover:text-foreground transition-colors"
+          >
+            <HelpCircle size={18} />
+          </button>
+          <button
+            onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
+            className="p-2 text-muted-foreground/30 hover:text-foreground transition-colors"
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
       </header>
 
       {/* SCROLLABLE CONTENT */}
@@ -410,6 +421,51 @@ export default function ThisDay() {
                   </button>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HELP MODAL */}
+      {showHelp && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowHelp(false)}>
+          <div className="w-full max-w-screen-sm bg-background rounded-[2.5rem] p-7 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-serif font-bold">How it works</h2>
+              <button onClick={() => setShowHelp(false)} className="p-2 bg-muted rounded-full text-foreground/60 active:scale-90 transition-transform">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-5 text-sm text-foreground/80">
+              <div className="flex gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 w-6 pt-0.5 shrink-0">1</span>
+                <div>
+                  <p className="font-semibold mb-0.5">Today — записывай мысли</p>
+                  <p className="text-muted-foreground/60 text-xs leading-relaxed">В течение дня пиши любые заметки в поле внизу. Нажми стрелку или Enter чтобы сохранить.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 w-6 pt-0.5 shrink-0">2</span>
+                <div>
+                  <p className="font-semibold mb-0.5">Interview — отвечай на вопросы</p>
+                  <p className="text-muted-foreground/60 text-xs leading-relaxed">В конце дня перейди во вкладку Interview. Нажми «AI Insights» — получи 5 вопросов и ответь на каждый. Нажми «Complete Reflection».</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 w-6 pt-0.5 shrink-0">3</span>
+                <div>
+                  <p className="font-semibold mb-0.5">Diary — создай запись дня</p>
+                  <p className="text-muted-foreground/60 text-xs leading-relaxed">Открой Diary, нажми кнопку синхронизации рядом с сегодняшней датой. ИИ напишет литературную страницу дневника.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 w-6 pt-0.5 shrink-0">4</span>
+                <div>
+                  <p className="font-semibold mb-0.5">Chronicle — итоги периода</p>
+                  <p className="text-muted-foreground/60 text-xs leading-relaxed">Нажми «+» на странице Chronicle, выбери период, настрой объём и нажми «Generate». ИИ составит обзор твоей жизни за этот отрезок.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
