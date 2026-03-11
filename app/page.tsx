@@ -267,7 +267,7 @@ export default function ThisDay() {
             <div key={note.id} className={`group transition-all relative ${index !== 0 ? "border-t border-border/30 pt-8" : ""}`}>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-[10px] font-mono text-muted-foreground/40 uppercase tracking-[0.15em]">
-                  Entry {String(index + 1).padStart(2, "0")}
+                  Entry {String(notes.length - index).padStart(2, "0")}
                 </span>
                 <span className="text-[10px] font-mono text-muted-foreground/40">{note.time}</span>
               </div>
