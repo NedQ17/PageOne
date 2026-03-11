@@ -441,29 +441,29 @@ export default function ThisDay() {
               <div className="flex gap-4">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 w-6 pt-0.5 shrink-0">1</span>
                 <div>
-                  <p className="font-semibold mb-0.5">Today — записывай мысли</p>
-                  <p className="text-muted-foreground/60 text-xs leading-relaxed">В течение дня пиши любые заметки в поле внизу. Нажми стрелку или Enter чтобы сохранить.</p>
+                  <p className="font-semibold mb-0.5">Today — capture your thoughts</p>
+                  <p className="text-muted-foreground/60 text-xs leading-relaxed">Throughout the day, write anything in the input field at the bottom. Press the arrow or Enter to save.</p>
                 </div>
               </div>
               <div className="flex gap-4">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 w-6 pt-0.5 shrink-0">2</span>
                 <div>
-                  <p className="font-semibold mb-0.5">Interview — отвечай на вопросы</p>
-                  <p className="text-muted-foreground/60 text-xs leading-relaxed">В конце дня перейди во вкладку Interview. Нажми «AI Insights» — получи 5 вопросов и ответь на каждый. Нажми «Complete Reflection».</p>
+                  <p className="font-semibold mb-0.5">Interview — reflect on your day</p>
+                  <p className="text-muted-foreground/60 text-xs leading-relaxed">At the end of the day, go to Interview. Tap "AI Insights" to get 5 personalized questions, answer each one, then tap "Complete Reflection".</p>
                 </div>
               </div>
               <div className="flex gap-4">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 w-6 pt-0.5 shrink-0">3</span>
                 <div>
-                  <p className="font-semibold mb-0.5">Diary — создай запись дня</p>
-                  <p className="text-muted-foreground/60 text-xs leading-relaxed">Открой Diary, нажми кнопку синхронизации рядом с сегодняшней датой. ИИ напишет литературную страницу дневника.</p>
+                  <p className="font-semibold mb-0.5">Diary — generate your diary page</p>
+                  <p className="text-muted-foreground/60 text-xs leading-relaxed">Open Diary and tap the sync button next to today's date. The AI will write a literary narrative from your notes and answers.</p>
                 </div>
               </div>
               <div className="flex gap-4">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 w-6 pt-0.5 shrink-0">4</span>
                 <div>
-                  <p className="font-semibold mb-0.5">Chronicle — итоги периода</p>
-                  <p className="text-muted-foreground/60 text-xs leading-relaxed">Нажми «+» на странице Chronicle, выбери период, настрой объём и нажми «Generate». ИИ составит обзор твоей жизни за этот отрезок.</p>
+                  <p className="font-semibold mb-0.5">Chronicle — review a period of life</p>
+                  <p className="text-muted-foreground/60 text-xs leading-relaxed">Tap "+" in Chronicle, pick a date range, set detail and length, then tap "Generate". The AI will write a life summary for that period.</p>
                 </div>
               </div>
             </div>
