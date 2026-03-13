@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       baseURL: "https://openrouter.ai/api/v1" 
     });
 
-    const [{ data: entries }, { data: interviews }] = await Promise.all([
+    const [{ data: entries }, { data: interviews }, { data: profile }] = await Promise.all([
       supabase.from('entries')
         .select('content')
         .eq('user_id', user.id)
@@ -34,14 +34,23 @@ export async function POST(req: Request) {
         .lte('created_at', endOfDay),
       supabase.from('interview_responses')
         .select('question, answer')
-        .eq('user_id', user.id)
+        .eq('user_id', user.id),
+      supabase.from('profiles').select('full_name, bio, narration_perspective').eq('id', user.id).single(),
     ]);
 
     if (!entries?.length && !interviews?.length) {
       return NextResponse.json({ error: 'No data found' }, { status: 400 });
     }
 
+    const perspective = profile?.narration_perspective === 'third' ? 'third' : 'first';
+    const profileBlock = [
+      profile?.full_name ? `Name: ${profile.full_name}` : '',
+      profile?.bio ? `About: ${profile.bio}` : '',
+      `Narration: ${perspective === 'third' ? `third person (write about the person by name or as "he/she", not as "I")` : 'first person (write as "I", in the voice of the person)'}`,
+    ].filter(Boolean).join('\n');
+
     const context = `
+      ${profileBlock ? `USER PROFILE:\n${profileBlock}\n` : ''}
       DATE: ${targetDate}
       USER_NOTES:
       ${entries?.map(e => e.content).join('\n')}

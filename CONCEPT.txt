@@ -17,7 +17,7 @@ life deserves to be written down.
 CORE CONCEPT
 ------------
 Most people don't keep a diary because writing is hard. Page One removes that friction
-by splitting the process into three lightweight steps:
+by splitting the process into four lightweight steps:
 
   1. CAPTURE — Throughout the day, the user records short notes: observations, events,
      feelings, ideas. No structure required. Just raw thought.
@@ -30,8 +30,12 @@ by splitting the process into three lightweight steps:
      diary entry: a 3–4 paragraph prose narrative, titled, written in the user's native
      language, in a literary but personal style.
 
-The result is a growing archive of life — days that would otherwise be forgotten,
-preserved as readable stories.
+  4. CHRONICLE — Over time, the user can generate life chronicles: AI-written narrative
+     summaries of any date range (a week, a month, a year). Chronicles draw from both
+     raw notes and diary pages, and are written as literary biographical prose —
+     capturing the emotional arc, key events, and recurring themes of a period.
+
+The result is a layered personal archive: raw moments → daily stories → life chronicles.
 
 
 LANGUAGE SUPPORT
@@ -60,17 +64,28 @@ Diary generation:
   - The app calls the generation API with notes + interview answers.
   - A prose diary page is created and stored with a title and word count.
   - The entry appears in the Diary archive and can be read in full via a modal.
+  - Diary pages can be edited manually after generation.
+
+Chronicle generation:
+  - From the Chronicle tab, user taps "+" to open the creation modal.
+  - User selects a date range (from / to), detail level (brief / detailed),
+    and length (short / medium / long).
+  - The app fetches all notes and diary pages within the range for the user.
+  - AI writes a multi-paragraph biographical prose narrative of that period.
+  - The chronicle is saved and displayed as a card in the Chronicle list.
+  - Tapping a card opens a full reading modal with a drop-cap first paragraph.
 
 
 PAGES AND NAVIGATION
 --------------------
-The app uses a fixed bottom navigation bar with three tabs:
+The app uses a fixed bottom navigation bar with four tabs:
 
   TODAY (/):
     The main capture screen. Shows the selected date with prev/next navigation.
     A calendar popup (triggered by tapping the date) allows jumping to any past day.
     The input capsule is visible only when viewing today (past days are read-only).
-    Notes are ordered newest-first.
+    Notes are ordered newest-first. Double-tap any note to edit or delete it.
+    Header includes a sign-out button and a "?" help modal with instructions.
 
   INTERVIEW (/interview):
     Two states: menu (idle) and asking (active interview).
@@ -79,12 +94,21 @@ The app uses a fixed bottom navigation bar with three tabs:
     Answers are held in temporary state until "Complete Reflection" is tapped.
     Once saved, the answers are stored and the view returns to menu with answers shown.
 
+  CHRONICLE (/chronicle):
+    List of all generated life chronicles, newest first.
+    Each card shows title, date range, detail/length levels, and a content preview.
+    Tapping a card opens a full reading modal with a drop-cap first paragraph.
+    The "+" button opens a creation modal: date range picker, detail level toggle
+    (brief / detailed), and length toggle (short / medium / long).
+    Chronicles can be deleted from the reading modal.
+
   DIARY (/diary):
     Archive of all generated diary pages.
-    Supports full-text search and date range filtering.
-    Each entry shows title, date, and word count.
+    Supports full-text search, month/year quick picker, and custom date range filtering.
+    Each entry shows chapter number, title, date, and word count.
     Tapping an entry opens a full-screen reading modal (StoryModal).
-    The sync button triggers AI diary page generation for a given day.
+    The reading modal supports inline editing of title and content.
+    The sync button triggers AI diary page generation for today.
 
 
 ADDITIONAL PAGES
@@ -105,7 +129,7 @@ AI ARCHITECTURE
 All AI is routed through OpenRouter using the OpenAI SDK.
 Primary model: gpt-4o-mini (cost-efficient, fast).
 
-Three API routes handle AI work:
+Four API routes handle AI work:
 
   GET /api/interview-questions
     - Reads today's entries for the authenticated user (from midnight UTC).
@@ -114,12 +138,20 @@ Three API routes handle AI work:
     - Returns a JSON array of question strings.
 
   POST /api/generate-diary-page
-    - Receives notes (array of strings) and interview responses (Q&A pairs).
+    - Receives a date; fetches notes and interview answers for that day.
     - Prompts the model to write a personal diary narrative.
     - Rules: prose only (no lists, no verse), 3–4 paragraphs, personal tone.
     - Returns title (string) + content (string).
     - Saves result to the daily_pages table.
     - Clears interview_responses after generation.
+
+  POST /api/generate-chronicle
+    - Receives date_from, date_to, detail_level, length_level.
+    - Fetches all entries and daily_pages in the date range for the user.
+    - Prompts the model to write a biographical narrative of that period.
+    - Paragraph count: 2–3 (short), 4–5 (medium), 6–8 (long).
+    - Returns title + multi-paragraph content.
+    - Saves result to the chronicles table.
 
   POST /api/extract
     - Reads the 15 most recent entries.
@@ -167,6 +199,18 @@ DATABASE SCHEMA (Supabase / PostgreSQL) (contains unused tables due to ongoing d
     title         text
     description   text
 
+  chronicles
+    id            uuid
+    user_id       uuid (FK)
+    date_from     date
+    date_to       date
+    title         text
+    content       text
+    word_count    integer
+    detail_level  text ('brief' | 'detailed')
+    length_level  text ('short' | 'medium' | 'long')
+    created_at    timestamptz
+
   shell_categories
     id            uuid
     user_id       uuid (FK)
@@ -206,9 +250,9 @@ AI API calls are server-side only — raw notes never leave the server unencrypt
 
 FUTURE DIRECTIONS (POTENTIAL)
 ------------------------------
-  - Weekly and monthly summary pages
   - Mood tracking via AI sentiment analysis
-  - Export to PDF or EPUB
+  - Export chronicles and diary pages to PDF or EPUB
   - Voice input for notes
   - Shared diary pages (optional, opt-in)
   - Reminders / daily prompts via push notifications
+  - Timeline view: visual calendar showing days with entries and generated pages

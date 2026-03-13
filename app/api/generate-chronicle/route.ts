@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'date_from and date_to are required' }, { status: 400 });
     }
 
-    const [{ data: entries }, { data: diaryPages }] = await Promise.all([
+    const [{ data: entries }, { data: diaryPages }, { data: profile }] = await Promise.all([
       supabase.from('entries')
         .select('content, created_at')
         .eq('user_id', user.id)
@@ -34,6 +34,7 @@ export async function POST(req: Request) {
         .gte('date', date_from)
         .lte('date', date_to)
         .order('date', { ascending: true }),
+      supabase.from('profiles').select('full_name, bio, narration_perspective').eq('id', user.id).single(),
     ]);
 
     if (!entries?.length && !diaryPages?.length) {
@@ -49,8 +50,15 @@ export async function POST(req: Request) {
         ? 'Include emotional nuances, context, inner states, and specific details.'
         : 'Focus only on the key events and main themes. Keep it concise.';
 
+    const perspective = profile?.narration_perspective === 'third' ? 'third' : 'first';
+    const profileBlock = [
+      profile?.full_name ? `Name: ${profile.full_name}` : '',
+      profile?.bio ? `About: ${profile.bio}` : '',
+      `Narration: ${perspective === 'third' ? `third person (write about the person by name or as "he/she", not as "I")` : 'first person (write as "I", in the voice of the person)'}`,
+    ].filter(Boolean).join('\n');
+
     const context = `
-PERIOD: ${date_from} — ${date_to}
+${profileBlock ? `USER PROFILE:\n${profileBlock}\n` : ''}PERIOD: ${date_from} — ${date_to}
 
 RAW NOTES (${entries?.length ?? 0} entries):
 ${entries?.map(e => `[${e.created_at.slice(0, 10)}] ${e.content}`).join('\n') ?? 'None'}

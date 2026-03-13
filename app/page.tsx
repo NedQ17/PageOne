@@ -33,6 +33,14 @@ export default function ThisDay() {
   const [editValue, setEditValue] = useState("");
 
   const [showHelp, setShowHelp] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileBio, setProfileBio] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [narrationPerspective, setNarrationPerspective] = useState<'first' | 'third'>('first');
+  const profileLoadedRef = useRef(false);
+
+  const BIO_LIMIT = 500;
 
   // Calendar state
   const [showCalendar, setShowCalendar] = useState(false);
@@ -159,6 +167,45 @@ export default function ThisDay() {
   const hasEntry = (d: Date) =>
     entryDates.has(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
 
+  const openProfile = async () => {
+    if (!profileLoadedRef.current) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("profiles").select("full_name, bio, narration_perspective").eq("id", user.id).single();
+      if (data) {
+        setProfileName(data.full_name || "");
+        setProfileBio(data.bio || "");
+        setNarrationPerspective(data.narration_perspective === 'third' ? 'third' : 'first');
+      }
+      profileLoadedRef.current = true;
+    }
+    setShowProfile(true);
+  };
+
+  const saveProfile = async () => {
+    setIsSavingProfile(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { error } = await supabase.from("profiles").upsert(
+        { id: user.id, full_name: profileName.trim(), bio: profileBio.trim(), narration_perspective: narrationPerspective, updated_at: new Date().toISOString() },
+        { onConflict: "id" }
+      );
+      if (error) throw error;
+      setShowProfile(false);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? String(e);
+      alert("Error saving: " + msg);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const clearProfile = () => {
+    setProfileName("");
+    setProfileBio("");
+  };
+
   const openCalendar = () => {
     const m = new Date(selectedDate);
     m.setDate(1);
@@ -259,6 +306,12 @@ export default function ThisDay() {
           </button>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            onClick={openProfile}
+            className="p-2 text-muted-foreground/30 hover:text-foreground transition-colors"
+          >
+            <User size={18} />
+          </button>
           <button
             onClick={() => setShowHelp(true)}
             className="p-2 text-muted-foreground/30 hover:text-foreground transition-colors"
@@ -439,6 +492,82 @@ export default function ThisDay() {
         </div>
       )}
 
+
+      {/* PROFILE MODAL */}
+      {showProfile && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowProfile(false)}>
+          <div className="w-full max-w-screen-sm bg-background rounded-[2.5rem] p-7 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-serif font-bold">About me</h2>
+              <button onClick={() => setShowProfile(false)} className="p-2 bg-muted rounded-full text-foreground/60 active:scale-90 transition-transform">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground/40 ml-1">Name</span>
+                <input
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  placeholder="Your name"
+                  className="w-full bg-muted/50 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-foreground/10 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between items-center ml-1 mr-1">
+                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground/40">About</span>
+                  <span className={`text-[9px] tabular-nums ${profileBio.length > BIO_LIMIT ? "text-red-500" : "text-muted-foreground/30"}`}>
+                    {profileBio.length} / {BIO_LIMIT}
+                  </span>
+                </div>
+                <textarea
+                  value={profileBio}
+                  onChange={(e) => setProfileBio(e.target.value)}
+                  placeholder="A few words about yourself..."
+                  rows={5}
+                  className="w-full bg-muted/50 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-foreground/10 transition-all resize-none leading-relaxed"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground/40 ml-1">Narration</span>
+                <div className="flex rounded-2xl overflow-hidden bg-muted/50">
+                  <button
+                    onClick={() => setNarrationPerspective('first')}
+                    className={`flex-1 py-3 text-[11px] font-bold uppercase tracking-widest transition-all ${narrationPerspective === 'first' ? 'bg-foreground text-background' : 'text-muted-foreground/50'}`}
+                  >
+                    First person
+                  </button>
+                  <button
+                    onClick={() => setNarrationPerspective('third')}
+                    className={`flex-1 py-3 text-[11px] font-bold uppercase tracking-widest transition-all ${narrationPerspective === 'third' ? 'bg-foreground text-background' : 'text-muted-foreground/50'}`}
+                  >
+                    Third person
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={clearProfile}
+                className="py-3 px-5 rounded-full text-[11px] font-bold uppercase tracking-widest text-muted-foreground/50 hover:text-red-500 border border-border/30 hover:border-red-500/20 transition-all active:scale-95"
+              >
+                Clear
+              </button>
+              <button
+                onClick={saveProfile}
+                disabled={isSavingProfile || profileBio.length > BIO_LIMIT}
+                className="flex-1 py-3 bg-foreground text-background rounded-full text-[11px] font-bold uppercase tracking-widest disabled:opacity-30 active:scale-[0.98] transition-all"
+              >
+                {isSavingProfile ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* HELP MODAL */}
       {showHelp && (
