@@ -87,6 +87,10 @@ export default function ChroniclePage() {
     setIsDeleting(false);
   };
 
+  if (loading) {
+    return <div className="h-full bg-background" />;
+  }
+
   return (
     <div className="flex flex-col h-[100dvh] bg-background font-sans animate-question">
 
