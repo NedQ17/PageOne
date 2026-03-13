@@ -324,7 +324,7 @@ export default function ThisDay() {
             <HelpCircle size={18} />
           </button>
           <button
-            onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
+            onClick={async () => { if (!confirm("Sign out?")) return; await supabase.auth.signOut(); router.push("/login"); }}
             className="p-2 text-muted-foreground/30 hover:text-foreground transition-colors"
           >
             <LogOut size={18} />
