@@ -201,6 +201,11 @@ export default function ThisDay() {
     }
   };
 
+  const closeProfile = () => {
+    profileLoadedRef.current = false;
+    setShowProfile(false);
+  };
+
   const clearProfile = () => {
     setProfileName("");
     setProfileBio("");
@@ -495,11 +500,11 @@ export default function ThisDay() {
 
       {/* PROFILE MODAL */}
       {showProfile && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowProfile(false)}>
+        <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm" onClick={closeProfile}>
           <div className="w-full max-w-screen-sm bg-background rounded-[2.5rem] p-7 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-serif font-bold">About me</h2>
-              <button onClick={() => setShowProfile(false)} className="p-2 bg-muted rounded-full text-foreground/60 active:scale-90 transition-transform">
+              <button onClick={closeProfile} className="p-2 bg-muted rounded-full text-foreground/60 active:scale-90 transition-transform">
                 <X size={18} />
               </button>
             </div>
