@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Trash2, Loader2, Pencil, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -31,6 +31,15 @@ export default function FullStoryModal({
   const [editTitle, setEditTitle] = useState(page.title);
   const [editContent, setEditContent] = useState(page.content);
   const [isSaving, setIsSaving] = useState(false);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isEditing && editTextareaRef.current) {
+      const t = editTextareaRef.current;
+      t.style.height = "auto";
+      t.style.height = t.scrollHeight + "px";
+    }
+  }, [isEditing]);
 
   if (!page) return null;
 
@@ -134,10 +143,10 @@ export default function FullStoryModal({
                 className="w-full text-4xl font-serif font-bold leading-tight bg-transparent outline-none border-b border-border/30 pb-2 mb-6"
               />
               <textarea
+                ref={editTextareaRef}
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 className="w-full text-[1.1875rem] font-serif leading-relaxed bg-muted/20 rounded-2xl p-4 outline-none resize-none focus:ring-1 focus:ring-foreground/10 min-h-[300px]"
-                style={{ height: "auto" }}
                 onInput={(e) => {
                   const t = e.currentTarget;
                   t.style.height = "auto";

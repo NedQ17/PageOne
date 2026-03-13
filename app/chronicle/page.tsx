@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { Plus, ScrollText, X, Loader2, Trash2 } from "lucide-react";
+import { Plus, ScrollText, X, Loader2, Trash2, Pencil, Check } from "lucide-react";
 
 interface Chronicle {
   id: string;
@@ -31,6 +31,19 @@ export default function ChroniclePage() {
   const [showCreate, setShowCreate] = useState(false);
   const [selected, setSelected] = useState<Chronicle | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isEditing && editTextareaRef.current) {
+      const t = editTextareaRef.current;
+      t.style.height = "auto";
+      t.style.height = t.scrollHeight + "px";
+    }
+  }, [isEditing]);
 
   // form
   const [dateFrom, setDateFrom] = useState("");
@@ -77,6 +90,38 @@ export default function ChroniclePage() {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const openChronicle = (c: Chronicle) => {
+    setSelected(c);
+    setEditTitle(c.title);
+    setEditContent(c.content);
+    setIsEditing(false);
+  };
+
+  const saveChronicleEdit = async () => {
+    if (!selected || !editTitle.trim() || !editContent.trim()) return;
+    setIsSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setIsSaving(false); return; }
+    const word_count = editContent.trim().split(/\s+/).length;
+    const { error } = await supabase
+      .from("chronicles")
+      .update({ title: editTitle, content: editContent, word_count })
+      .eq("id", selected.id)
+      .eq("user_id", user.id);
+    if (!error) {
+      const updated = { ...selected, title: editTitle, content: editContent, word_count };
+      setChronicles((prev) => prev.map((c) => (c.id === selected.id ? updated : c)));
+      setSelected(updated);
+      setIsEditing(false);
+    }
+    setIsSaving(false);
+  };
+
+  const cancelEdit = () => {
+    if (selected) { setEditTitle(selected.title); setEditContent(selected.content); }
+    setIsEditing(false);
   };
 
   const deleteChronicle = async (id: string) => {
@@ -128,7 +173,7 @@ export default function ChroniclePage() {
           chronicles.map((c, i) => (
             <div
               key={c.id}
-              onClick={() => setSelected(c)}
+              onClick={() => openChronicle(c)}
               className={`py-10 cursor-pointer group ${i !== 0 ? "border-t border-border/30" : ""}`}
             >
               <div className="flex justify-between mb-2">
@@ -242,7 +287,7 @@ export default function ChroniclePage() {
       {/* VIEW MODAL */}
       {selected && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-xl" onClick={() => setSelected(null)} />
+          <div className="absolute inset-0 bg-background/60 backdrop-blur-xl" onClick={isEditing ? undefined : () => setSelected(null)} />
           <div
             className="relative w-full max-w-2xl bg-background rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl max-h-[95dvh] flex flex-col animate-in slide-in-from-bottom-10 duration-500"
             onClick={(e) => e.stopPropagation()}
@@ -253,17 +298,40 @@ export default function ChroniclePage() {
                 <span className="text-[10px] text-muted-foreground/40 uppercase tracking-widest">
                   {formatRange(selected.date_from, selected.date_to)}
                 </span>
-                <button
-                  onClick={() => deleteChronicle(selected.id)}
-                  disabled={isDeleting}
-                  className="p-2 text-muted-foreground/30 hover:text-red-500 transition-colors"
-                >
-                  {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                {!isEditing && (
+                  <button
+                    onClick={() => deleteChronicle(selected.id)}
+                    disabled={isDeleting}
+                    className="p-2 text-muted-foreground/30 hover:text-red-500 transition-colors"
+                  >
+                    {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {isEditing ? (
+                  <>
+                    <button onClick={cancelEdit} className="text-[10px] uppercase tracking-widest px-3 py-1.5 text-muted-foreground">
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveChronicleEdit}
+                      disabled={isSaving}
+                      className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold px-4 py-1.5 bg-foreground text-background rounded-full disabled:opacity-40"
+                    >
+                      {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                      Save
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={() => setIsEditing(true)} className="p-2 text-muted-foreground/30 hover:text-foreground transition-colors">
+                    <Pencil size={16} />
+                  </button>
+                )}
+                <button onClick={() => setSelected(null)} className="p-2 bg-muted rounded-full text-foreground/70 active:scale-90 transition-transform">
+                  <X size={18} />
                 </button>
               </div>
-              <button onClick={() => setSelected(null)} className="p-2 bg-muted rounded-full text-foreground/70 active:scale-90 transition-transform">
-                <X size={18} />
-              </button>
             </div>
 
             {/* fade top */}
@@ -271,19 +339,42 @@ export default function ChroniclePage() {
 
             {/* content */}
             <div className="flex-1 overflow-y-auto px-8 pb-32 pt-6 no-scrollbar relative z-0">
-              <h2 className="text-4xl font-serif font-bold mb-10 leading-tight">{selected.title}</h2>
-              <div className="space-y-8">
-                {selected.content.split("\n").filter(Boolean).map((p, i) => (
-                  <p
-                    key={i}
-                    className={`text-[1.1875rem] font-serif leading-relaxed ${
-                      i === 0 ? "first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left" : ""
-                    }`}
-                  >
-                    {p}
-                  </p>
-                ))}
-              </div>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full text-4xl font-serif font-bold leading-tight bg-transparent outline-none border-b border-border/30 pb-2 mb-6"
+                  />
+                  <textarea
+                    ref={editTextareaRef}
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full text-[1.1875rem] font-serif leading-relaxed bg-muted/20 rounded-2xl p-4 outline-none resize-none focus:ring-1 focus:ring-foreground/10 min-h-[300px]"
+                    onInput={(e) => {
+                      const t = e.currentTarget;
+                      t.style.height = "auto";
+                      t.style.height = t.scrollHeight + "px";
+                    }}
+                  />
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-4xl font-serif font-bold mb-10 leading-tight">{selected.title}</h2>
+                  <div className="space-y-8">
+                    {selected.content.split("\n").filter(Boolean).map((p, i) => (
+                      <p
+                        key={i}
+                        className={`text-[1.1875rem] font-serif leading-relaxed ${
+                          i === 0 ? "first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left" : ""
+                        }`}
+                      >
+                        {p}
+                      </p>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* fade bottom */}
