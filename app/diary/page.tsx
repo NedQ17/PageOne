@@ -262,10 +262,14 @@ export default function DiaryPage() {
 
       {/* DYNAMIC MODAL */}
       {selectedPage && (
-        <FullStoryModal 
+        <FullStoryModal
           page={selectedPage}
           onClose={() => setSelectedPage(null)}
           onDelete={deletePage}
+          onUpdate={(updated) => {
+            setPages((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+            setSelectedPage(updated);
+          }}
           isDeleting={isDeleting}
         />
       )}
