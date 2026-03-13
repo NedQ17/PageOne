@@ -49,9 +49,12 @@ export default function DiaryPage() {
 
   const fetchPages = async () => {
     setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
     const { data } = await supabase
       .from("daily_pages")
       .select("id, date, title, content, word_count")
+      .eq("user_id", user.id)
       .order("date", { ascending: false });
 
     setPages(data || []);
@@ -106,10 +109,13 @@ export default function DiaryPage() {
 
     setIsDeleting(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
       const { error } = await supabase
         .from("daily_pages")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("user_id", user.id);
 
       if (error) throw error;
 

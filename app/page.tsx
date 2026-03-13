@@ -195,7 +195,9 @@ export default function ThisDay() {
 
   const saveEdit = async (noteId: string) => {
     if (!editValue.trim()) return;
-    const { error } = await supabase.from("entries").update({ content: editValue }).eq("id", noteId);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("entries").update({ content: editValue }).eq("id", noteId).eq("user_id", user.id);
     if (!error) {
       setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, text: editValue } : n)));
       setEditingId(null);
@@ -204,7 +206,9 @@ export default function ThisDay() {
 
   const deleteNote = async (noteId: string) => {
     if (!confirm("Delete this entry?")) return;
-    const { error } = await supabase.from("entries").delete().eq("id", noteId);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("entries").delete().eq("id", noteId).eq("user_id", user.id);
     if (!error) {
       setNotes((prev) => prev.filter((n) => n.id !== noteId));
       setEditingId(null);

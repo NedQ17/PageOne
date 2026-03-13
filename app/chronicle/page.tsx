@@ -81,7 +81,9 @@ export default function ChroniclePage() {
 
   const deleteChronicle = async (id: string) => {
     setIsDeleting(true);
-    await supabase.from("chronicles").delete().eq("id", id);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setIsDeleting(false); return; }
+    await supabase.from("chronicles").delete().eq("id", id).eq("user_id", user.id);
     setChronicles((prev) => prev.filter((c) => c.id !== id));
     setSelected(null);
     setIsDeleting(false);
