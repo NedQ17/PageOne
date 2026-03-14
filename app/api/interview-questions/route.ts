@@ -69,7 +69,8 @@ ${profile?.narration_perspective === 'third' ? `- Narration style: third person 
 
 LANGUAGE RULE:
 - Detect the language of CURRENT_CONTEXT and respond in that same language.
-- If CURRENT_CONTEXT is "EMPTY_CONTEXT", default to Russian.
+- If notes are in multiple languages, use the language that appears most frequently. If equal, use English.
+- If CURRENT_CONTEXT is "EMPTY_CONTEXT", default to English.
 
 STYLE RULE:
 - Mirror the user's own tone and vocabulary from their notes — if they write casually, ask casually; if they write reflectively, match that.

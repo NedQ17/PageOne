@@ -67,7 +67,7 @@ export async function POST(req: Request) {
           content: `You are a professional biographer writing a classic prose diary.
           
           STRICT RULES:
-          1. LANGUAGE: Match the user's language (Russian if they write in Russian, English if in English).
+          1. LANGUAGE: Detect the language the user writes in and respond in that same language. If notes are in multiple languages, use the language that appears most frequently. If equal, use English. If no language can be detected, default to English.
           2. STYLE: Use prose. Avoid complex metaphors, flowery adjectives, or "biographical" clichés 
           3. NO VERSE: Absolutely forbidden to write in poems, rhymes, or verse. Use standard paragraphs.
           4. CONTENT: Use USER_NOTES as the foundation and INTERVIEW_RESPONSES for emotional depth.

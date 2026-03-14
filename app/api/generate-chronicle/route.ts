@@ -80,7 +80,7 @@ ${diaryPages?.map(p => `[${p.date}] ${p.title}\n${p.content}`).join('\n\n') ?? '
           content: `You are a biographer writing a life chronicle — a narrative summary of a period in someone's life.
 
 RULES:
-1. LANGUAGE: Match the user's language exactly (Russian if they write in Russian, English if in English).
+1. LANGUAGE: Detect the language the user writes in and respond in that same language. If notes are in multiple languages, use the language that appears most frequently. If equal, use English. If no language can be detected, default to English.
 2. STYLE: Clear, literary prose. No lists, no headers, no verse.
 3. LENGTH: Write exactly ${paragraphCount} paragraphs.
 4. DETAIL: ${detailInstruction}

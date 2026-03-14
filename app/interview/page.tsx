@@ -19,6 +19,8 @@ export default function InterviewPage() {
   
   const [loadingAi, setLoadingAi] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState("");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -155,7 +157,48 @@ export default function InterviewPage() {
               {aiData.map((item, i) => (
                 <div key={i} className="space-y-2">
                   <p className="text-[10px] text-muted-foreground/40 uppercase font-mono tracking-tight leading-tight">{item.q}</p>
-                  <p className="text-[16px] text-foreground/90 leading-relaxed font-serif">{item.a}</p>
+                  {editingIdx === i ? (
+                    <div className="space-y-2">
+                      <textarea
+                        autoFocus
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        className="w-full bg-muted/40 rounded-2xl px-4 py-3 text-[16px] font-serif text-foreground/90 leading-relaxed outline-none resize-none focus:ring-1 focus:ring-foreground/10 min-h-[80px]"
+                        onInput={(e) => {
+                          const t = e.currentTarget;
+                          t.style.height = "auto";
+                          t.style.height = t.scrollHeight + "px";
+                        }}
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={() => setEditingIdx(null)}
+                          className="text-[10px] uppercase tracking-widest px-3 py-1.5 text-muted-foreground"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!editingText.trim()) return;
+                            const updated = [...aiData];
+                            updated[i] = { ...updated[i], a: editingText.trim() };
+                            setAiData(updated);
+                            setEditingIdx(null);
+                          }}
+                          className="text-[10px] uppercase tracking-widest font-bold px-4 py-1.5 bg-foreground text-background rounded-full"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p
+                      className="text-[16px] text-foreground/90 leading-relaxed font-serif cursor-pointer hover:text-foreground transition-colors"
+                      onClick={() => { setEditingIdx(i); setEditingText(item.a); }}
+                    >
+                      {item.a}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
