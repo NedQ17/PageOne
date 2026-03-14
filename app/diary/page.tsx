@@ -12,6 +12,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   X,
 } from "lucide-react";
 
@@ -148,6 +149,78 @@ export default function DiaryPage() {
       })()
     : null;
 
+  const hasActiveFilters = !!(searchQuery || startDate || endDate);
+
+  const [collapsedYears, setCollapsedYears] = useState<Set<string>>(new Set());
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set());
+
+  const toggleYear = (year: string) =>
+    setCollapsedYears((prev) => { const s = new Set(prev); s.has(year) ? s.delete(year) : s.add(year); return s; });
+  const toggleMonth = (key: string) =>
+    setCollapsedMonths((prev) => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
+
+  // Build year→month→pages structure when no filters active
+  const yearGroups = useMemo(() => {
+    if (hasActiveFilters) return null;
+    const map = new Map<string, Map<string, DiaryPage[]>>();
+    filteredPages.forEach((page) => {
+      const year = page.date.slice(0, 4);
+      const monthKey = page.date.slice(0, 7);
+      if (!map.has(year)) map.set(year, new Map());
+      const yMap = map.get(year)!;
+      if (!yMap.has(monthKey)) yMap.set(monthKey, []);
+      yMap.get(monthKey)!.push(page);
+    });
+    return map;
+  }, [filteredPages, hasActiveFilters]);
+
+  // Default: collapse all except current month
+  useEffect(() => {
+    if (!yearGroups) return;
+    const currentMonthKey = new Date().toISOString().slice(0, 7);
+    const currentYear = currentMonthKey.slice(0, 4);
+    const allYears = new Set<string>();
+    const allMonths = new Set<string>();
+    yearGroups.forEach((monthMap, year) => {
+      if (year !== currentYear) allYears.add(year);
+      monthMap.forEach((_, mk) => { if (mk !== currentMonthKey) allMonths.add(mk); });
+    });
+    setCollapsedYears(allYears);
+    setCollapsedMonths(allMonths);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pages]);
+
+  const collapseAllExceptCurrent = () => {
+    if (!yearGroups) return;
+    const currentMonthKey = new Date().toISOString().slice(0, 7);
+    const currentYear = currentMonthKey.slice(0, 4);
+    const allYears = new Set<string>();
+    const allMonths = new Set<string>();
+    yearGroups.forEach((monthMap, year) => {
+      if (year !== currentYear) allYears.add(year);
+      monthMap.forEach((_, mk) => { if (mk !== currentMonthKey) allMonths.add(mk); });
+    });
+    setCollapsedYears(allYears);
+    setCollapsedMonths(allMonths);
+  };
+
+  const collapseAll = () => {
+    if (!yearGroups) return;
+    const allYears = new Set<string>();
+    const allMonths = new Set<string>();
+    yearGroups.forEach((monthMap, year) => {
+      allYears.add(year);
+      monthMap.forEach((_, mk) => allMonths.add(mk));
+    });
+    setCollapsedYears(allYears);
+    setCollapsedMonths(allMonths);
+  };
+
+  const expandAll = () => {
+    setCollapsedYears(new Set());
+    setCollapsedMonths(new Set());
+  };
+
   if (loading) return <div className="h-full bg-background" />;
 
   return (
@@ -258,6 +331,82 @@ export default function DiaryPage() {
             <Calendar size={40} className="mx-auto mb-4" />
             <p className="text-xs uppercase tracking-widest">No entries found</p>
           </div>
+        ) : yearGroups ? (
+          <>
+            <div className="flex gap-3 pt-6 pb-1">
+              <button onClick={collapseAllExceptCurrent} className="text-[9px] uppercase tracking-widest text-muted-foreground/40 hover:text-foreground transition-colors">Current month</button>
+              <span className="text-muted-foreground/20 text-[9px]">·</span>
+              <button onClick={collapseAll} className="text-[9px] uppercase tracking-widest text-muted-foreground/40 hover:text-foreground transition-colors">Collapse all</button>
+              <span className="text-muted-foreground/20 text-[9px]">·</span>
+              <button onClick={expandAll} className="text-[9px] uppercase tracking-widest text-muted-foreground/40 hover:text-foreground transition-colors">Expand all</button>
+            </div>
+            {Array.from(yearGroups.entries()).map(([year, monthMap], yi) => {
+            const yearCollapsed = collapsedYears.has(year);
+            return (
+              <div key={year}>
+                {/* YEAR HEADER */}
+                <button
+                  onClick={() => toggleYear(year)}
+                  className={`flex items-center gap-2 w-full text-left ${yi !== 0 ? "pt-14" : "pt-5"} pb-3`}
+                >
+                  <span className="text-5xl font-serif font-bold text-foreground/100 tracking-tight leading-none">{year}</span>
+                  <ChevronDown
+                    size={18}
+                    className={`text-foreground/20 mt-1 transition-transform duration-200 ${yearCollapsed ? "-rotate-90" : ""}`}
+                  />
+                </button>
+
+                {!yearCollapsed && Array.from(monthMap.entries()).map(([monthKey, monthPages], mi) => {
+                  const [y, m] = monthKey.split("-").map(Number);
+                  const monthLabel = new Date(y, m - 1).toLocaleDateString("en-US", { month: "long" });
+                  const monthCollapsed = collapsedMonths.has(monthKey);
+                  return (
+                    <div key={monthKey}>
+                      {/* MONTH HEADER */}
+                      <button
+                        onClick={() => toggleMonth(monthKey)}
+                        className={`flex items-center gap-2 w-full text-left ${mi !== 0 ? "pt-8" : "pt-2"} pb-2`}
+                      >
+                        <span className="text-3xl font-serif font-medium text-foreground/100 tracking-tight">{monthLabel}</span>
+                        <ChevronDown
+                          size={14}
+                          className={`text-foreground/20 mt-0.5 transition-transform duration-200 ${monthCollapsed ? "-rotate-90" : ""}`}
+                        />
+                      </button>
+
+                      {!monthCollapsed && monthPages.map((page, pi) => (
+                        <div
+                          key={page.id}
+                          onClick={() => setSelectedPage(page)}
+                          className={`py-10 cursor-pointer group ${pi !== 0 || true ? "border-t border-border/30" : ""}`}
+                        >
+                          <div className="flex justify-between mb-2">
+                            <span className="text-[10px] text-muted-foreground/40 uppercase tracking-widest">
+                              Chapter {pages.length - pages.indexOf(page)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground/40 italic">
+                              {new Date(page.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </span>
+                          </div>
+                          <h3 className="text-2xl font-serif font-bold mb-3 group-hover:text-muted-foreground transition-colors">
+                            {page.title}
+                          </h3>
+                          <p className="text-[1rem] text-muted-foreground/70 line-clamp-2 font-serif italic mb-4 leading-relaxed">
+                            {page.content}
+                          </p>
+                          <div className="flex items-center gap-2 text-[9px] text-muted-foreground/40 uppercase tracking-tight">
+                            <BookOpen size={10} />
+                            {page.word_count} words
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+          </>
         ) : (
           filteredPages.map((page, i) => (
             <div
