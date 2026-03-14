@@ -333,12 +333,10 @@ export default function DiaryPage() {
           </div>
         ) : yearGroups ? (
           <>
-            <div className="flex gap-3 pt-6 pb-1">
-              <button onClick={collapseAllExceptCurrent} className="text-[9px] uppercase tracking-widest text-muted-foreground/40 hover:text-foreground transition-colors">Current month</button>
-              <span className="text-muted-foreground/20 text-[9px]">·</span>
-              <button onClick={collapseAll} className="text-[9px] uppercase tracking-widest text-muted-foreground/40 hover:text-foreground transition-colors">Collapse all</button>
-              <span className="text-muted-foreground/20 text-[9px]">·</span>
-              <button onClick={expandAll} className="text-[9px] uppercase tracking-widest text-muted-foreground/40 hover:text-foreground transition-colors">Expand all</button>
+            <div className="flex gap-2 pt-1 pb-1">
+              <button onClick={collapseAllExceptCurrent} className="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest bg-muted text-muted-foreground/60 hover:bg-foreground hover:text-background transition-all">Current month</button>
+              <button onClick={collapseAll} className="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest bg-muted text-muted-foreground/60 hover:bg-foreground hover:text-background transition-all">Collapse all</button>
+              <button onClick={expandAll} className="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest bg-muted text-muted-foreground/60 hover:bg-foreground hover:text-background transition-all">Expand all</button>
             </div>
             {Array.from(yearGroups.entries()).map(([year, monthMap], yi) => {
             const yearCollapsed = collapsedYears.has(year);
@@ -347,7 +345,7 @@ export default function DiaryPage() {
                 {/* YEAR HEADER */}
                 <button
                   onClick={() => toggleYear(year)}
-                  className={`flex items-center gap-2 w-full text-left ${yi !== 0 ? "pt-14" : "pt-5"} pb-3`}
+                  className={`flex items-center gap-2 w-full text-left ${yi !== 0 ? "pt-14" : "pt-6"} pb-3`}
                 >
                   <span className="text-5xl font-serif font-bold text-foreground/100 tracking-tight leading-none">{year}</span>
                   <ChevronDown
